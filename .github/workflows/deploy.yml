@@ -1,0 +1,39 @@
+name: Deploy Fund Chart to GitHub Pages
+
+on:
+  push:
+    branches: [ "main" ]  # 当向 main 分支推送代码时也触发（可选）
+  schedule:
+    - cron: '0 20 * * *'  # 每天 UTC 时间 20:00 (北京时间次日 04:00) 自动运行
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. 获取你的代码
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # 2. 设置 Python 环境
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    # 3. 安装依赖
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt
+
+    # 4. 运行脚本生成网站
+    - name: Build the site
+      run: |
+        python build_site.py
+
+    # 5. 部署到 GitHub Pages
+    - name: Deploy to GitHub Pages
+      uses: peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./docs  # 发布 docs 目录下的所有内容
