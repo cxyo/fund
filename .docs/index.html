@@ -1,129 +1,1089 @@
-import os
-import requests
-import re
-import json
-import pandas as pd
-from pyecharts import options as opts
-from pyecharts.charts import Line
-from pyecharts.globals import ThemeType
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Awesome-pyecharts</title>
+                <script type="text/javascript" src="https://assets.pyecharts.org/assets/v5/echarts.min.js"></script>
 
-
-# 你原有的 jsjz_api 和 fetch_fund_data 函数保持不变
-def jsjz_api(code, pageSize=20):
-	url = f'http://api.fund.eastmoney.com/f10/lsjz?callback=jQuery1830041192874394646584_1617938643457&fundCode={code}&pageIndex=1&pageSize={pageSize}&startDate=&endDate=&_=1617939181252'
-	headers = {
-		'Referer': 'http://fundf10.eastmoney.com/',
-		'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36'
-	}
-	try:
-		resp = requests.get(url, headers=headers)
-		resp.raise_for_status()
-		html = resp.text
-		res = re.findall(r'\((.*?)\)', html)
-		return json.loads(res[0])["Data"]["LSJZList"]
-	except requests.RequestException as e:
-		return {"错误": f"请求失败: {str(e)}"}
-	except Exception as e:
-		return {"错误": f"解析数据失败: {str(e)}"}
-
-
-def fetch_fund_data(codes):
-	riqi = {}
-	fund_data = {code: {} for code in codes}
-
-	for e in codes:
-		data = jsjz_api(e)
-		for index, item in enumerate(reversed(data)):
-			riqi[index] = item['FSRQ']  # 日期
-			fund_data[e][index] = float(item['DWJZ'])  # 净值
-
-	return riqi, fund_data
-
-
-# 基金代码和名称
-names = ['中证500', '芯片', '5G', '云计算', '恒生指数', '人工智能']
-cw_codes = ['160119', '008887', '008086', '017854', '164705', '008082']
-
-
-def set_y_axis(data):
-	y_max, y_min = data.max() * 1.08, data.min() * 0.92
-	return round(y_max, 4), round(y_min, 4)
-
-
-def generate_chart():
-	# 获取数据
-	riqi, cn_data = fetch_fund_data(cw_codes)
-
-	# 将基金数据转换为DataFrame
-	nav_dict = {'日期': riqi}
-	for code, data in cn_data.items():
-		nav_dict[code] = data
-	nav_data = pd.DataFrame(nav_dict)
-
-	# 生成图表
-	line = Line(init_opts=opts.InitOpts(theme=ThemeType.LIGHT, width="1200px", height="500px"))
-	line.add_xaxis(nav_data['日期'].tolist())
-
-	fund_series = []
-	for name, code in zip(names, cw_codes):
-		y_data = nav_data[code].tolist()
-		y_max, y_min = set_y_axis(nav_data[code])
-		fund_series.append({
-			"name": name,
-			"y_data": y_data,
-			"y_max": y_max,
-			"y_min": y_min,
-		})
-
-		line.add_yaxis(
-			series_name=name,
-			y_axis=y_data,
-			is_symbol_show=True,
-			markpoint_opts=opts.MarkPointOpts(
-				data=[opts.MarkPointItem(type_="min", name="最小值"), opts.MarkPointItem(type_="max", name="最大值")]
-			),
-			markline_opts=opts.MarkLineOpts(
-				data=[opts.MarkLineItem(type_="average", name="平均值")]
-			)
-		)
-
-	# 设置全局y轴选项
-	line.set_global_opts(
-		title_opts=opts.TitleOpts(title="净值走势图", subtitle="数据网上获取"),
-		datazoom_opts=[opts.DataZoomOpts()],
-		yaxis_opts=opts.AxisOpts(
-			max_=max([fund["y_max"] for fund in fund_series]),
-			min_=min([fund["y_min"] for fund in fund_series]),
-			interval=0.02
-		)
-	)
-
-	return line
-
-
-def main():
-	print("开始生成基金净值走势图...")
-
-	# 确保 docs 目录存在
-	docs_dir = "docs"
-	if not os.path.exists(docs_dir):
-		os.makedirs(docs_dir)
-		print(f"已创建目录: {docs_dir}")
-
-	# 生成图表
-	chart = generate_chart()
-
-	# 将图表渲染为完整的 HTML 文件，并保存到 docs 目录
-	output_path = os.path.join(docs_dir, "index.html")
-	chart.render(output_path)
-	print(f"网站已成功生成在 {output_path}")
-
-	# 检查文件是否真的创建成功
-	if os.path.exists(output_path):
-		print("✅ 文件创建成功！")
-	else:
-		print("❌ 文件创建失败，请检查权限或路径")
-
-
-if __name__ == '__main__':
-	main()
+</head>
+<body >
+    <div id="f147f01df457465a81da2d052c88b324" class="chart-container" style="width:1200px; height:500px; "></div>
+    <script>
+        var chart_f147f01df457465a81da2d052c88b324 = echarts.init(
+            document.getElementById('f147f01df457465a81da2d052c88b324'), 'light', {renderer: 'canvas'});
+        var option_f147f01df457465a81da2d052c88b324 = {
+    "animation": true,
+    "animationThreshold": 2000,
+    "animationDuration": 1000,
+    "animationEasing": "cubicOut",
+    "animationDelay": 0,
+    "animationDurationUpdate": 300,
+    "animationEasingUpdate": "cubicOut",
+    "animationDelayUpdate": 0,
+    "aria": {
+        "enabled": false
+    },
+    "series": [
+        {
+            "type": "line",
+            "name": "\u4e2d\u8bc1500",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": false,
+            "clip": true,
+            "step": false,
+            "stackStrategy": "samesign",
+            "data": [
+                [
+                    "2025-11-12",
+                    2.0323
+                ],
+                [
+                    "2025-11-13",
+                    2.0622
+                ],
+                [
+                    "2025-11-14",
+                    2.0305
+                ],
+                [
+                    "2025-11-17",
+                    2.0303
+                ],
+                [
+                    "2025-11-18",
+                    2.0079
+                ],
+                [
+                    "2025-11-19",
+                    2.0007
+                ],
+                [
+                    "2025-11-20",
+                    1.9846
+                ],
+                [
+                    "2025-11-21",
+                    1.9195
+                ],
+                [
+                    "2025-11-24",
+                    1.9332
+                ],
+                [
+                    "2025-11-25",
+                    1.9561
+                ],
+                [
+                    "2025-11-26",
+                    1.9589
+                ],
+                [
+                    "2025-11-27",
+                    1.9552
+                ],
+                [
+                    "2025-11-28",
+                    1.9765
+                ],
+                [
+                    "2025-12-01",
+                    1.9953
+                ],
+                [
+                    "2025-12-02",
+                    1.9788
+                ],
+                [
+                    "2025-12-03",
+                    1.9672
+                ],
+                [
+                    "2025-12-04",
+                    1.9723
+                ],
+                [
+                    "2025-12-05",
+                    1.9954
+                ],
+                [
+                    "2025-12-08",
+                    2.015
+                ],
+                [
+                    "2025-12-09",
+                    2.0013
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": true,
+                "margin": 8,
+                "valueAnimation": false
+            },
+            "logBase": 10,
+            "seriesLayoutBy": "column",
+            "lineStyle": {
+                "show": true,
+                "width": 1,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid"
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "markPoint": {
+                "label": {
+                    "show": true,
+                    "position": "inside",
+                    "color": "#fff",
+                    "margin": 8,
+                    "valueAnimation": false
+                },
+                "data": [
+                    {
+                        "name": "\u6700\u5c0f\u503c",
+                        "type": "min"
+                    },
+                    {
+                        "name": "\u6700\u5927\u503c",
+                        "type": "max"
+                    }
+                ]
+            },
+            "markLine": {
+                "silent": false,
+                "precision": 2,
+                "label": {
+                    "show": true,
+                    "margin": 8,
+                    "valueAnimation": false
+                },
+                "data": [
+                    {
+                        "name": "\u5e73\u5747\u503c",
+                        "type": "average"
+                    }
+                ]
+            },
+            "zlevel": 0,
+            "z": 0
+        },
+        {
+            "type": "line",
+            "name": "\u82af\u7247",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": false,
+            "clip": true,
+            "step": false,
+            "stackStrategy": "samesign",
+            "data": [
+                [
+                    "2025-11-12",
+                    1.511
+                ],
+                [
+                    "2025-11-13",
+                    1.5353
+                ],
+                [
+                    "2025-11-14",
+                    1.4828
+                ],
+                [
+                    "2025-11-17",
+                    1.474
+                ],
+                [
+                    "2025-11-18",
+                    1.4867
+                ],
+                [
+                    "2025-11-19",
+                    1.4735
+                ],
+                [
+                    "2025-11-20",
+                    1.456
+                ],
+                [
+                    "2025-11-21",
+                    1.3971
+                ],
+                [
+                    "2025-11-24",
+                    1.409
+                ],
+                [
+                    "2025-11-25",
+                    1.4195
+                ],
+                [
+                    "2025-11-26",
+                    1.44
+                ],
+                [
+                    "2025-11-27",
+                    1.444
+                ],
+                [
+                    "2025-11-28",
+                    1.4597
+                ],
+                [
+                    "2025-12-01",
+                    1.4854
+                ],
+                [
+                    "2025-12-02",
+                    1.463
+                ],
+                [
+                    "2025-12-03",
+                    1.4544
+                ],
+                [
+                    "2025-12-04",
+                    1.4839
+                ],
+                [
+                    "2025-12-05",
+                    1.4791
+                ],
+                [
+                    "2025-12-08",
+                    1.5129
+                ],
+                [
+                    "2025-12-09",
+                    1.5117
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": true,
+                "margin": 8,
+                "valueAnimation": false
+            },
+            "logBase": 10,
+            "seriesLayoutBy": "column",
+            "lineStyle": {
+                "show": true,
+                "width": 1,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid"
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "markPoint": {
+                "label": {
+                    "show": true,
+                    "position": "inside",
+                    "color": "#fff",
+                    "margin": 8,
+                    "valueAnimation": false
+                },
+                "data": [
+                    {
+                        "name": "\u6700\u5c0f\u503c",
+                        "type": "min"
+                    },
+                    {
+                        "name": "\u6700\u5927\u503c",
+                        "type": "max"
+                    }
+                ]
+            },
+            "markLine": {
+                "silent": false,
+                "precision": 2,
+                "label": {
+                    "show": true,
+                    "margin": 8,
+                    "valueAnimation": false
+                },
+                "data": [
+                    {
+                        "name": "\u5e73\u5747\u503c",
+                        "type": "average"
+                    }
+                ]
+            },
+            "zlevel": 0,
+            "z": 0
+        },
+        {
+            "type": "line",
+            "name": "5G",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": false,
+            "clip": true,
+            "step": false,
+            "stackStrategy": "samesign",
+            "data": [
+                [
+                    "2025-11-12",
+                    1.9782
+                ],
+                [
+                    "2025-11-13",
+                    1.9765
+                ],
+                [
+                    "2025-11-14",
+                    1.9095
+                ],
+                [
+                    "2025-11-17",
+                    1.9259
+                ],
+                [
+                    "2025-11-18",
+                    1.9234
+                ],
+                [
+                    "2025-11-19",
+                    1.9315
+                ],
+                [
+                    "2025-11-20",
+                    1.9337
+                ],
+                [
+                    "2025-11-21",
+                    1.8323
+                ],
+                [
+                    "2025-11-24",
+                    1.8192
+                ],
+                [
+                    "2025-11-25",
+                    1.8867
+                ],
+                [
+                    "2025-11-26",
+                    1.976
+                ],
+                [
+                    "2025-11-27",
+                    1.9716
+                ],
+                [
+                    "2025-11-28",
+                    1.9813
+                ],
+                [
+                    "2025-12-01",
+                    2.0283
+                ],
+                [
+                    "2025-12-02",
+                    2.036
+                ],
+                [
+                    "2025-12-03",
+                    2.0157
+                ],
+                [
+                    "2025-12-04",
+                    2.0268
+                ],
+                [
+                    "2025-12-05",
+                    2.0366
+                ],
+                [
+                    "2025-12-08",
+                    2.1221
+                ],
+                [
+                    "2025-12-09",
+                    2.1807
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": true,
+                "margin": 8,
+                "valueAnimation": false
+            },
+            "logBase": 10,
+            "seriesLayoutBy": "column",
+            "lineStyle": {
+                "show": true,
+                "width": 1,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid"
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "markPoint": {
+                "label": {
+                    "show": true,
+                    "position": "inside",
+                    "color": "#fff",
+                    "margin": 8,
+                    "valueAnimation": false
+                },
+                "data": [
+                    {
+                        "name": "\u6700\u5c0f\u503c",
+                        "type": "min"
+                    },
+                    {
+                        "name": "\u6700\u5927\u503c",
+                        "type": "max"
+                    }
+                ]
+            },
+            "markLine": {
+                "silent": false,
+                "precision": 2,
+                "label": {
+                    "show": true,
+                    "margin": 8,
+                    "valueAnimation": false
+                },
+                "data": [
+                    {
+                        "name": "\u5e73\u5747\u503c",
+                        "type": "average"
+                    }
+                ]
+            },
+            "zlevel": 0,
+            "z": 0
+        },
+        {
+            "type": "line",
+            "name": "\u4e91\u8ba1\u7b97",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": false,
+            "clip": true,
+            "step": false,
+            "stackStrategy": "samesign",
+            "data": [
+                [
+                    "2025-11-12",
+                    1.4821
+                ],
+                [
+                    "2025-11-13",
+                    1.4905
+                ],
+                [
+                    "2025-11-14",
+                    1.4499
+                ],
+                [
+                    "2025-11-17",
+                    1.4768
+                ],
+                [
+                    "2025-11-18",
+                    1.4868
+                ],
+                [
+                    "2025-11-19",
+                    1.4827
+                ],
+                [
+                    "2025-11-20",
+                    1.4769
+                ],
+                [
+                    "2025-11-21",
+                    1.4242
+                ],
+                [
+                    "2025-11-24",
+                    1.4431
+                ],
+                [
+                    "2025-11-25",
+                    1.4676
+                ],
+                [
+                    "2025-11-26",
+                    1.5121
+                ],
+                [
+                    "2025-11-27",
+                    1.4957
+                ],
+                [
+                    "2025-11-28",
+                    1.4976
+                ],
+                [
+                    "2025-12-01",
+                    1.5225
+                ],
+                [
+                    "2025-12-02",
+                    1.5125
+                ],
+                [
+                    "2025-12-03",
+                    1.4862
+                ],
+                [
+                    "2025-12-04",
+                    1.4954
+                ],
+                [
+                    "2025-12-05",
+                    1.5049
+                ],
+                [
+                    "2025-12-08",
+                    1.5463
+                ],
+                [
+                    "2025-12-09",
+                    1.5648
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": true,
+                "margin": 8,
+                "valueAnimation": false
+            },
+            "logBase": 10,
+            "seriesLayoutBy": "column",
+            "lineStyle": {
+                "show": true,
+                "width": 1,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid"
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "markPoint": {
+                "label": {
+                    "show": true,
+                    "position": "inside",
+                    "color": "#fff",
+                    "margin": 8,
+                    "valueAnimation": false
+                },
+                "data": [
+                    {
+                        "name": "\u6700\u5c0f\u503c",
+                        "type": "min"
+                    },
+                    {
+                        "name": "\u6700\u5927\u503c",
+                        "type": "max"
+                    }
+                ]
+            },
+            "markLine": {
+                "silent": false,
+                "precision": 2,
+                "label": {
+                    "show": true,
+                    "margin": 8,
+                    "valueAnimation": false
+                },
+                "data": [
+                    {
+                        "name": "\u5e73\u5747\u503c",
+                        "type": "average"
+                    }
+                ]
+            },
+            "zlevel": 0,
+            "z": 0
+        },
+        {
+            "type": "line",
+            "name": "\u6052\u751f\u6307\u6570",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": false,
+            "clip": true,
+            "step": false,
+            "stackStrategy": "samesign",
+            "data": [
+                [
+                    "2025-11-12",
+                    1.2508
+                ],
+                [
+                    "2025-11-13",
+                    1.2581
+                ],
+                [
+                    "2025-11-14",
+                    1.2352
+                ],
+                [
+                    "2025-11-17",
+                    1.2265
+                ],
+                [
+                    "2025-11-18",
+                    1.2069
+                ],
+                [
+                    "2025-11-19",
+                    1.2009
+                ],
+                [
+                    "2025-11-20",
+                    1.2016
+                ],
+                [
+                    "2025-11-21",
+                    1.1741
+                ],
+                [
+                    "2025-11-24",
+                    1.1958
+                ],
+                [
+                    "2025-11-25",
+                    1.2035
+                ],
+                [
+                    "2025-11-26",
+                    1.2054
+                ],
+                [
+                    "2025-11-27",
+                    1.2054
+                ],
+                [
+                    "2025-11-28",
+                    1.2015
+                ],
+                [
+                    "2025-12-01",
+                    1.2076
+                ],
+                [
+                    "2025-12-02",
+                    1.211
+                ],
+                [
+                    "2025-12-03",
+                    1.1978
+                ],
+                [
+                    "2025-12-04",
+                    1.2061
+                ],
+                [
+                    "2025-12-05",
+                    1.2128
+                ],
+                [
+                    "2025-12-08",
+                    1.1987
+                ],
+                [
+                    "2025-12-09",
+                    1.1848
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": true,
+                "margin": 8,
+                "valueAnimation": false
+            },
+            "logBase": 10,
+            "seriesLayoutBy": "column",
+            "lineStyle": {
+                "show": true,
+                "width": 1,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid"
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "markPoint": {
+                "label": {
+                    "show": true,
+                    "position": "inside",
+                    "color": "#fff",
+                    "margin": 8,
+                    "valueAnimation": false
+                },
+                "data": [
+                    {
+                        "name": "\u6700\u5c0f\u503c",
+                        "type": "min"
+                    },
+                    {
+                        "name": "\u6700\u5927\u503c",
+                        "type": "max"
+                    }
+                ]
+            },
+            "markLine": {
+                "silent": false,
+                "precision": 2,
+                "label": {
+                    "show": true,
+                    "margin": 8,
+                    "valueAnimation": false
+                },
+                "data": [
+                    {
+                        "name": "\u5e73\u5747\u503c",
+                        "type": "average"
+                    }
+                ]
+            },
+            "zlevel": 0,
+            "z": 0
+        },
+        {
+            "type": "line",
+            "name": "\u4eba\u5de5\u667a\u80fd",
+            "connectNulls": false,
+            "xAxisIndex": 0,
+            "symbolSize": 4,
+            "showSymbol": true,
+            "smooth": false,
+            "clip": true,
+            "step": false,
+            "stackStrategy": "samesign",
+            "data": [
+                [
+                    "2025-11-12",
+                    1.4699
+                ],
+                [
+                    "2025-11-13",
+                    1.4835
+                ],
+                [
+                    "2025-11-14",
+                    1.448
+                ],
+                [
+                    "2025-11-17",
+                    1.4474
+                ],
+                [
+                    "2025-11-18",
+                    1.4311
+                ],
+                [
+                    "2025-11-19",
+                    1.4133
+                ],
+                [
+                    "2025-11-20",
+                    1.3966
+                ],
+                [
+                    "2025-11-21",
+                    1.3667
+                ],
+                [
+                    "2025-11-24",
+                    1.369
+                ],
+                [
+                    "2025-11-25",
+                    1.3911
+                ],
+                [
+                    "2025-11-26",
+                    1.4289
+                ],
+                [
+                    "2025-11-27",
+                    1.4275
+                ],
+                [
+                    "2025-11-28",
+                    1.4503
+                ],
+                [
+                    "2025-12-01",
+                    1.4648
+                ],
+                [
+                    "2025-12-02",
+                    1.4433
+                ],
+                [
+                    "2025-12-03",
+                    1.4322
+                ],
+                [
+                    "2025-12-04",
+                    1.4586
+                ],
+                [
+                    "2025-12-05",
+                    1.476
+                ],
+                [
+                    "2025-12-08",
+                    1.5092
+                ],
+                [
+                    "2025-12-09",
+                    1.5041
+                ]
+            ],
+            "hoverAnimation": true,
+            "label": {
+                "show": true,
+                "margin": 8,
+                "valueAnimation": false
+            },
+            "logBase": 10,
+            "seriesLayoutBy": "column",
+            "lineStyle": {
+                "show": true,
+                "width": 1,
+                "opacity": 1,
+                "curveness": 0,
+                "type": "solid"
+            },
+            "areaStyle": {
+                "opacity": 0
+            },
+            "markPoint": {
+                "label": {
+                    "show": true,
+                    "position": "inside",
+                    "color": "#fff",
+                    "margin": 8,
+                    "valueAnimation": false
+                },
+                "data": [
+                    {
+                        "name": "\u6700\u5c0f\u503c",
+                        "type": "min"
+                    },
+                    {
+                        "name": "\u6700\u5927\u503c",
+                        "type": "max"
+                    }
+                ]
+            },
+            "markLine": {
+                "silent": false,
+                "precision": 2,
+                "label": {
+                    "show": true,
+                    "margin": 8,
+                    "valueAnimation": false
+                },
+                "data": [
+                    {
+                        "name": "\u5e73\u5747\u503c",
+                        "type": "average"
+                    }
+                ]
+            },
+            "zlevel": 0,
+            "z": 0
+        }
+    ],
+    "legend": [
+        {
+            "data": [
+                "\u4e2d\u8bc1500",
+                "\u82af\u7247",
+                "5G",
+                "\u4e91\u8ba1\u7b97",
+                "\u6052\u751f\u6307\u6570",
+                "\u4eba\u5de5\u667a\u80fd"
+            ],
+            "selected": {},
+            "show": true,
+            "padding": 5,
+            "itemGap": 10,
+            "itemWidth": 25,
+            "itemHeight": 14,
+            "backgroundColor": "transparent",
+            "borderColor": "#ccc",
+            "borderRadius": 0,
+            "pageButtonItemGap": 5,
+            "pageButtonPosition": "end",
+            "pageFormatter": "{current}/{total}",
+            "pageIconColor": "#2f4554",
+            "pageIconInactiveColor": "#aaa",
+            "pageIconSize": 15,
+            "animationDurationUpdate": 800,
+            "selector": false,
+            "selectorPosition": "auto",
+            "selectorItemGap": 7,
+            "selectorButtonGap": 10
+        }
+    ],
+    "tooltip": {
+        "show": true,
+        "trigger": "item",
+        "triggerOn": "mousemove|click",
+        "axisPointer": {
+            "type": "line"
+        },
+        "showContent": true,
+        "alwaysShowContent": false,
+        "showDelay": 0,
+        "hideDelay": 100,
+        "enterable": false,
+        "confine": false,
+        "appendToBody": false,
+        "transitionDuration": 0.4,
+        "textStyle": {
+            "fontSize": 14
+        },
+        "borderWidth": 0,
+        "padding": 5,
+        "order": "seriesAsc"
+    },
+    "xAxis": [
+        {
+            "show": true,
+            "scale": false,
+            "nameLocation": "end",
+            "nameGap": 15,
+            "gridIndex": 0,
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "minInterval": 0,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            },
+            "animation": true,
+            "animationThreshold": 2000,
+            "animationDuration": 1000,
+            "animationEasing": "cubicOut",
+            "animationDelay": 0,
+            "animationDurationUpdate": 300,
+            "animationEasingUpdate": "cubicOut",
+            "animationDelayUpdate": 0,
+            "data": [
+                "2025-11-12",
+                "2025-11-13",
+                "2025-11-14",
+                "2025-11-17",
+                "2025-11-18",
+                "2025-11-19",
+                "2025-11-20",
+                "2025-11-21",
+                "2025-11-24",
+                "2025-11-25",
+                "2025-11-26",
+                "2025-11-27",
+                "2025-11-28",
+                "2025-12-01",
+                "2025-12-02",
+                "2025-12-03",
+                "2025-12-04",
+                "2025-12-05",
+                "2025-12-08",
+                "2025-12-09"
+            ]
+        }
+    ],
+    "yAxis": [
+        {
+            "show": true,
+            "scale": false,
+            "nameLocation": "end",
+            "nameGap": 15,
+            "interval": 0.02,
+            "gridIndex": 0,
+            "inverse": false,
+            "offset": 0,
+            "splitNumber": 5,
+            "min": 1.0802,
+            "max": 2.3552,
+            "minInterval": 0,
+            "splitLine": {
+                "show": true,
+                "lineStyle": {
+                    "show": true,
+                    "width": 1,
+                    "opacity": 1,
+                    "curveness": 0,
+                    "type": "solid"
+                }
+            },
+            "animation": true,
+            "animationThreshold": 2000,
+            "animationDuration": 1000,
+            "animationEasing": "cubicOut",
+            "animationDelay": 0,
+            "animationDurationUpdate": 300,
+            "animationEasingUpdate": "cubicOut",
+            "animationDelayUpdate": 0
+        }
+    ],
+    "title": [
+        {
+            "show": true,
+            "text": "\u51c0\u503c\u8d70\u52bf\u56fe",
+            "target": "blank",
+            "subtext": "\u6570\u636e\u7f51\u4e0a\u83b7\u53d6",
+            "subtarget": "blank",
+            "padding": 5,
+            "itemGap": 10,
+            "textAlign": "auto",
+            "textVerticalAlign": "auto",
+            "triggerEvent": false
+        }
+    ],
+    "dataZoom": [
+        {
+            "show": true,
+            "type": "slider",
+            "showDetail": true,
+            "showDataShadow": true,
+            "realtime": true,
+            "start": 20,
+            "end": 80,
+            "orient": "horizontal",
+            "zoomLock": false,
+            "filterMode": "filter"
+        }
+    ]
+};
+        chart_f147f01df457465a81da2d052c88b324.setOption(option_f147f01df457465a81da2d052c88b324);
+    </script>
+</body>
+</html>
