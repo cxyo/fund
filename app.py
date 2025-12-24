@@ -533,5 +533,14 @@ def history():
                          uploaded_files=uploaded_files,
                          processed_files=processed_files)
 
+# if __name__ == '__main__':
+
+#     app.run(debug=True, host='0.0.0.0', port=5000)
+
+# 在文件末尾添加或修改这部分代码
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    import os
+    # 从环境变量获取端口，如果不存在则使用5000
+    port = int(os.environ.get('PORT', 5000))
+    # 必须监听 0.0.0.0 才能对外提供服务
+    app.run(host='0.0.0.0', port=port, debug=False)  # 生产环境要设置 debug=False
