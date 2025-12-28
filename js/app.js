@@ -334,32 +334,7 @@ function renderFundTable() {
     
     // 如果没有显示任何数据，显示提示
     if (displayedCount === 0) {
-        console.log('调试信息:');
-        console.log('- codeConfig中的代码总数:', Object.values(codeConfig).flat().length);
-        console.log('- fundsData中的代码总数:', Object.keys(fundsData).length);
-        console.log('- 成功匹配的代码:', matchedCodes.length, matchedCodes);
-        console.log('- 未找到的代码:', missingCodes.length, missingCodes);
-        
-        // 打印fundsData的前几个key作为示例
-        console.log('- fundsData中的部分代码示例:', Object.keys(fundsData).slice(0, 10));
-        
-        // 检查 fundsData 中是否有特定代码
-        const testCodes = ['399550', '000015', '399006', '000010'];
-        console.log('- 检查特定代码是否在 fundsData 中:');
-        for (const code of testCodes) {
-            console.log(`  ${code}: ${fundsData.hasOwnProperty(code)}`);
-        }
-        
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">没有找到匹配的指数数据，请检查：<br>1. CSV数据是否包含代码 ' + 
-            (codeConfig && Object.values(codeConfig).flat().join(', ') || '无') + 
-            '<br>2. 打开浏览器控制台(F12)查看详细调试信息</td></tr>';
-    } else {
-        // 显示成功匹配的统计信息
-        console.log('数据加载成功:');
-        console.log('- codeConfig中的代码总数:', Object.values(codeConfig).flat().length);
-        console.log('- fundsData中的代码总数:', Object.keys(fundsData).length);
-        console.log('- 成功匹配的代码:', matchedCodes.length);
-        console.log('- 未找到的代码:', missingCodes.length);
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center;">没有找到匹配的指数数据，请检查CSV数据是否包含有效代码</td></tr>';
     }
 }
 
@@ -387,7 +362,6 @@ function formatAttention(value) {
 // 处理Excel格式的CSV值（处理="代码"格式）
 function parseValue(val) {
     if (!val) return '';
-    const original = val;
     // 处理Excel格式：="12345" -> 12345
     val = val.trim();
     if (val.startsWith('="') && val.endsWith('"')) {
@@ -398,7 +372,6 @@ function parseValue(val) {
     }
     // 去除所有残留引号
     val = val.replace(/"/g, '');
-    console.log(`parseValue调试: 输入="${original}" -> 输出="${val}"`);
     return val;
 }
 
@@ -492,11 +465,6 @@ function parseCSVFull(csvText) {
             pb_percentile: parseNumber(values[colMap.pb_percentile]),
             attention: parseValue(values[colMap.attention]) || '',
         };
-        
-        // 调试：打印前10个解析的代码
-        if (i <= 10) {
-            console.log(`解析行 ${i}: code="${code}", name="${itemData.name}"`);
-        }
         
         data[code] = itemData;
     }
