@@ -113,6 +113,47 @@
                     </tbody>
                 </table>
             </div>
+            
+            <!-- 配置管理按钮 -->
+            <div class="config-buttons">
+                <button onclick="exportCustomConfig()" class="config-btn export-btn">📥 导出配置</button>
+                <button onclick="clearCustomConfig()" class="config-btn clear-btn">🗑️ 清除配置</button>
+                <label class="config-btn import-btn">
+                    📤 导入配置
+                    <input type="file" id="configFileInput" accept=".json" style="display: none;" onchange="importCustomConfig(this)">
+                </label>
+            </div>
+        </div>
+
+        <!-- 导入配置说明 -->
+        <div class="import-section">
+            <h3>📋 配置导入说明</h3>
+            <p>导入配置文件后，指数数据会立即显示在基金温度表中。</p>
+            <div class="import-template">
+                <h4>配置文件格式（JSON）：</h4>
+                <pre>{
+  "B": ["399006", "399550"],
+  "C": ["399673", "000852"],
+  "D": ["399348", "399701"],
+  "E": ["399807", "399396"],
+  "F": ["930653", "399997"],
+  "G": ["HSCGSI", "HSTECH"]
+}</pre>
+            </div>
+        </div>
+
+        <!-- CSV数据上传区域 -->
+        <div class="csv-upload-section">
+            <h3>📤 数据更新</h3>
+            <p>上传新的data.csv文件更新基金温度数据</p>
+            <div class="csv-upload-box">
+                <label class="csv-upload-btn">
+                    📁 选择CSV文件
+                    <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="handleCSVUpload(this)">
+                </label>
+                <span id="csvFileName" class="csv-file-name">未选择文件</span>
+            </div>
+            <div id="csvUploadStatus" class="csv-upload-status"></div>
         </div>
 
         <div class="loading-overlay" id="loadingOverlay">

@@ -523,3 +523,140 @@ td {
     font-size: 1.3em;
     letter-spacing: 3px;
 }
+
+/* 配置按钮样式 */
+.config-buttons {
+    margin-top: 15px;
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+}
+
+.config-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: all 0.3s;
+}
+
+.export-btn {
+    background-color: #28a745;
+    color: white;
+}
+
+.export-btn:hover {
+    background-color: #218838;
+}
+
+.clear-btn {
+    background-color: #dc3545;
+    color: white;
+}
+
+.clear-btn:hover {
+    background-color: #c82333;
+}
+
+.import-btn {
+    background-color: #17a2b8;
+    color: white;
+    display: inline-block;
+}
+
+.import-btn:hover {
+    background-color: #138496;
+}
+
+/* 导入配置说明区域 */
+.import-section {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.import-section h3 {
+    margin-bottom: 15px;
+    color: #17a2b8;
+}
+
+.import-section p {
+    margin-bottom: 15px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.import-template {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    padding: 15px;
+}
+
+.import-template h4 {
+    margin-bottom: 10px;
+    color: #feca57;
+}
+
+.import-template pre {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+    font-size: 0.85em;
+    color: #a8e6cf;
+    line-height: 1.5;
+}
+
+/* CSV数据上传区域 */
+.csv-upload-section {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.csv-upload-section h3 {
+    margin-bottom: 10px;
+    color: #2ecc71;
+}
+
+.csv-upload-section > p {
+    margin-bottom: 15px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.csv-upload-box {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-bottom: 10px;
+}
+
+.csv-upload-btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+    color: #fff;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: inline-block;
+}
+
+.csv-upload-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 20px rgba(46, 204, 113, 0.4);
+}
+
+.csv-file-name {
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 0.9em;
+}
+
+.csv-upload-status {
+    padding: 10px;
+    border-radius: 8px;
+    font-size: 0.9em;
+}
