@@ -633,6 +633,17 @@ td {
     margin-bottom: 10px;
 }
 
+.csv-upload-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+
+.csv-upload-row .csv-upload-box {
+    flex: 1;
+    min-width: 200px;
+}
+
 .csv-upload-btn {
     padding: 10px 20px;
     border: none;

@@ -52,7 +52,6 @@ let codeConfig = null;
 let searchResults = [];
 let selectedIndex = null;
 let selectedCategory = null;
-let customCodes = null; // 用户自定义的指数
 
 document.addEventListener('DOMContentLoaded', function() {
     updateDate();
@@ -90,6 +89,17 @@ async function loadAllData() {
         }
         const csvText2 = await csvRes2.text();
         oldData = parseOldCSVFull(csvText2);
+        
+        // 优先从localStorage加载用户上传的数据
+        const localCsvData = localStorage.getItem('csvData');
+        if (localCsvData) {
+            fundsData = parseCSVFull(localCsvData);
+        }
+        
+        const localOldData = localStorage.getItem('oldData');
+        if (localOldData) {
+            oldData = parseOldCSVFull(localOldData);
+        }
         
         // 合并数据：将oldData的上两日涨跌幅合并到fundsData
         for (const [code, data] of Object.entries(oldData)) {
@@ -839,7 +849,6 @@ function importCustomConfig(input) {
             
             // 保存到localStorage
             localStorage.setItem('customCodeConfig', JSON.stringify(cleanedConfig));
-            customCodes = cleanedConfig;
 
             // 完全替换codeConfig为导入的配置（而非合并）
             codeConfig = JSON.parse(JSON.stringify(cleanedConfig));
@@ -865,14 +874,11 @@ function clearCustomConfig() {
     // 清除localStorage中的配置
     localStorage.removeItem('customCodeConfig');
     localStorage.removeItem('csvData');
-    localStorage.removeItem('csvOldData');
+    localStorage.removeItem('oldData');
     
-    // 完全清空codeConfig
     codeConfig = {};
-    customCodes = null;
     fundsData = {};
     
-    // 重新渲染空表格
     renderFundTable();
     showNotification('已清除所有配置，表格已清空', 'success');
 }
@@ -991,12 +997,11 @@ function cleanValue(val) {
     return val;
 }
 
-// 处理CSV文件上传
+// 处理data.csv文件上传
 function handleCSVUpload(input) {
     const file = input.files[0];
     if (!file) return;
     
-    // 更新文件名显示
     document.getElementById('csvFileName').textContent = file.name;
     const statusEl = document.getElementById('csvUploadStatus');
     
@@ -1004,26 +1009,16 @@ function handleCSVUpload(input) {
     reader.onload = function(e) {
         try {
             let csvText = e.target.result;
-            
-            // 清理Excel格式的数据（处理="代码"格式）
             csvText = cleanExcelFormat(csvText);
             
-            // 验证CSV格式
             const lines = csvText.trim().split('\n');
             if (lines.length < 2) {
                 throw new Error('CSV文件内容为空或格式不正确');
             }
             
-            // 检查是否包含必要的列（支持中文和英文列名）
             const headers = lines[0].split(',').map(h => h.trim().replace(/^"|"$/g, ''));
-            // 检查是否包含code列（指数代码）
-            const hasCodeCol = headers.some(h => 
-                h.toLowerCase() === 'code' || h === '指数代码'
-            );
-            // 检查是否包含name列（指数名称）
-            const hasNameCol = headers.some(h => 
-                h.toLowerCase() === 'name' || h === '指数名称'
-            );
+            const hasCodeCol = headers.some(h => h.toLowerCase() === 'code' || h === '指数代码');
+            const hasNameCol = headers.some(h => h.toLowerCase() === 'name' || h === '指数名称');
             
             if (!hasCodeCol) {
                 throw new Error('CSV文件缺少必要的列：code/指数代码');
@@ -1032,73 +1027,88 @@ function handleCSVUpload(input) {
                 throw new Error('CSV文件缺少必要的列：name/指数名称');
             }
             
-            // 保存清理后的CSV到localStorage（用于页面实时显示）
             localStorage.setItem('csvData', csvText);
             fundsData = parseCSVFull(csvText);
             
-            // 生成下载链接
             const blob = new Blob([csvText], { type: 'text/csv' });
             const url = URL.createObjectURL(blob);
             const downloadLink = document.createElement('a');
             downloadLink.href = url;
             downloadLink.download = 'data.csv';
             
-            // 同时加载old_data.csv获取上两日涨跌数据
-            fetch('old_data.csv')
-                .then(response => {
-                    if (!response.ok) throw new Error('old_data.csv加载失败');
-                    return response.text();
-                })
-                .then(oldCsvText => {
-                    // 清理旧数据格式
-                    oldCsvText = cleanExcelFormat(oldCsvText);
-                    const oldData = parseOldCSVFull(oldCsvText);
-                    
-                    let mergeCount = 0;
-                    // 合并上两日涨跌数据到fundsData
-                    for (const [code, oldItem] of Object.entries(oldData)) {
-                        if (fundsData[code]) {
-                            fundsData[code].two_day_change_pct = oldItem.change_pct;
-                            mergeCount++;
-                        }
-                    }
-                    
-                    // 重新渲染表格
-                    renderFundTable();
-                    
-                    // 数据完全处理后再触发下载
-                    showNotification(`数据已加载！正在下载 data.csv 文件...`, 'info');
-                    
-                    // 延迟500ms后自动下载，确保用户看到提示
-                    setTimeout(() => {
-                        downloadLink.click();
-                        URL.revokeObjectURL(url);
-                    }, 500);
-                    
-                    statusEl.innerHTML = `<span style="color: #51cf66;">上传成功！data.csv 已自动下载，请将文件保存到项目根目录。</span>`;
-                })
-                .catch(err => {
-                    // 加载old_data.csv失败，上两日涨跌数据将使用默认值
-                    renderFundTable();
-                    
-                    // 即使old_data.csv加载失败也触发下载
-                    showNotification(`数据已加载（old_data.csv加载失败）！正在下载 data.csv 文件...`, 'info');
-                    
-                    setTimeout(() => {
-                        downloadLink.click();
-                        URL.revokeObjectURL(url);
-                    }, 500);
-                    
-                    statusEl.innerHTML = `<span style="color: #51cf66;">上传成功！data.csv 已自动下载，请将文件保存到项目根目录。<br><small style="color: #fcc419;">注意：上两日涨跌数据加载失败，将使用默认值</small></span>`;
-                });
+            renderFundTable();
             
+            showNotification(`data.csv 已加载！正在下载...`, 'info');
+            
+            setTimeout(() => {
+                downloadLink.click();
+                URL.revokeObjectURL(url);
+            }, 500);
+            
+            statusEl.innerHTML = `<span style="color: #51cf66;">✅ data.csv 上传成功，已自动下载</span>`;
         } catch (error) {
-            statusEl.innerHTML = `<span style="color: #ff6b6b;">上传失败：${error.message}</span>`;
+            statusEl.innerHTML = `<span style="color: #ff6b6b;">❌ 上传失败：${error.message}</span>`;
             showNotification('上传失败：' + error.message, 'error');
         }
-        // 清空input，允许再次上传同一文件
         input.value = '';
         document.getElementById('csvFileName').textContent = '未选择文件';
+    };
+    reader.readAsText(file);
+}
+
+// 处理old_data.csv文件上传
+function handleOldCSVUpload(input) {
+    const file = input.files[0];
+    if (!file) return;
+    
+    document.getElementById('oldCsvFileName').textContent = file.name;
+    const statusEl = document.getElementById('csvUploadStatus');
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            let csvText = e.target.result;
+            csvText = cleanExcelFormat(csvText);
+            
+            const lines = csvText.trim().split('\n');
+            if (lines.length < 2) {
+                throw new Error('CSV文件内容为空或格式不正确');
+            }
+            
+            oldData = parseOldCSVFull(csvText);
+            localStorage.setItem('oldData', csvText);
+            
+            let mergeCount = 0;
+            if (fundsData) {
+                for (const [code, data] of Object.entries(oldData)) {
+                    if (fundsData[code]) {
+                        fundsData[code].two_day_change_pct = data.change_pct;
+                        mergeCount++;
+                    }
+                }
+                renderFundTable();
+            }
+            
+            const blob = new Blob([csvText], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const downloadLink = document.createElement('a');
+            downloadLink.href = url;
+            downloadLink.download = 'old_data.csv';
+            
+            showNotification(`old_data.csv 已加载（${mergeCount}条数据）！正在下载...`, 'info');
+            
+            setTimeout(() => {
+                downloadLink.click();
+                URL.revokeObjectURL(url);
+            }, 500);
+            
+            statusEl.innerHTML = `<span style="color: #a855f7;">✅ old_data.csv 上传成功（${mergeCount}条），已自动下载</span>`;
+        } catch (error) {
+            statusEl.innerHTML = `<span style="color: #ff6b6b;">❌ 上传失败：${error.message}</span>`;
+            showNotification('上传失败：' + error.message, 'error');
+        }
+        input.value = '';
+        document.getElementById('oldCsvFileName').textContent = '未选择文件';
     };
     reader.readAsText(file);
 }

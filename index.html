@@ -145,13 +145,22 @@
         <!-- CSV数据上传区域 -->
         <div class="csv-upload-section">
             <h3>📤 数据更新</h3>
-            <p>上传新的data.csv文件更新基金温度数据</p>
-            <div class="csv-upload-box">
-                <label class="csv-upload-btn">
-                    📁 选择CSV文件
-                    <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="handleCSVUpload(this)">
-                </label>
-                <span id="csvFileName" class="csv-file-name">未选择文件</span>
+            <p>分别上传data.csv和old_data.csv文件</p>
+            <div class="csv-upload-row">
+                <div class="csv-upload-box">
+                    <label class="csv-upload-btn">
+                        📁 选择data.csv
+                        <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="handleCSVUpload(this)">
+                    </label>
+                    <span id="csvFileName" class="csv-file-name">未选择文件</span>
+                </div>
+                <div class="csv-upload-box">
+                    <label class="csv-upload-btn" style="background: #6f42c1;">
+                        📁 选择old_data.csv
+                        <input type="file" id="oldCsvFileInput" accept=".csv" style="display: none;" onchange="handleOldCSVUpload(this)">
+                    </label>
+                    <span id="oldCsvFileName" class="csv-file-name">未选择文件</span>
+                </div>
             </div>
             <div id="csvUploadStatus" class="csv-upload-status"></div>
         </div>
