@@ -85,39 +85,65 @@ async function loadAllData() {
         const todayStr = formatDate(today);
         const yesterdayStr = formatDate(yesterday);
         
-        console.log(`尝试加载今天的文件: ${todayStr}.csv`);
         console.log(`尝试加载昨天的文件: ${yesterdayStr}.csv`);
+        console.log(`尝试加载前天的文件: ${formatDate(new Date(yesterday.setDate(yesterday.getDate() - 1)))}`);
+        
+        // 重置yesterday
+        yesterday.setDate(yesterday.getDate() + 1);
         
         let csvText1, csvText2;
+        let actualDataDate = yesterdayStr; // 默认使用昨天的日期作为数据日期
         
-        // 尝试加载今天的CSV文件
+        // 尝试加载今天的CSV文件（优先使用今天数据，如已上传）
         try {
             const csvRes1 = await fetch(`${todayStr}.csv`);
             if (csvRes1.ok) {
                 csvText1 = await csvRes1.text();
                 fundsData = parseCSVFull(csvText1);
+                actualDataDate = todayStr; // 更新为今天的日期
                 console.log(`${todayStr}.csv 加载成功`);
             } else {
-                // 如果今天的文件不存在，尝试使用data.csv作为备选
-                const backupRes = await fetch('data.csv');
-                if (backupRes.ok) {
-                    csvText1 = await backupRes.text();
+                // 今天的文件不存在，使用昨天的文件
+                const csvResYesterday = await fetch(`${yesterdayStr}.csv`);
+                if (csvResYesterday.ok) {
+                    csvText1 = await csvResYesterday.text();
                     fundsData = parseCSVFull(csvText1);
-                    console.log(`使用备选文件 data.csv 加载成功`);
+                    console.log(`${yesterdayStr}.csv 加载成功（今天数据未上传，使用昨天数据）`);
                 } else {
-                    throw new Error(`${todayStr}.csv 和 data.csv 都加载失败`);
+                    // 如果昨天的文件也不存在，尝试使用data.csv作为备选
+                    const backupRes = await fetch('data.csv');
+                    if (backupRes.ok) {
+                        csvText1 = await backupRes.text();
+                        fundsData = parseCSVFull(csvText1);
+                        console.log(`使用备选文件 data.csv 加载成功`);
+                    } else {
+                        throw new Error(`${todayStr}.csv 和 ${yesterdayStr}.csv 和 data.csv 都加载失败`);
+                    }
                 }
             }
         } catch (error) {
             console.error('加载今天的CSV文件失败:', error);
-            // 尝试使用data.csv作为备选
-            const backupRes = await fetch('data.csv');
-            if (backupRes.ok) {
-                csvText1 = await backupRes.text();
-                fundsData = parseCSVFull(csvText1);
-                console.log(`使用备选文件 data.csv 加载成功`);
-            } else {
-                throw new Error('所有今天的CSV文件都加载失败');
+            // 尝试加载昨天的文件
+            try {
+                const csvResYesterday = await fetch(`${yesterdayStr}.csv`);
+                if (csvResYesterday.ok) {
+                    csvText1 = await csvResYesterday.text();
+                    fundsData = parseCSVFull(csvText1);
+                    console.log(`${yesterdayStr}.csv 加载成功（今天数据未上传，使用昨天数据）`);
+                } else {
+                    // 尝试使用data.csv作为备选
+                    const backupRes = await fetch('data.csv');
+                    if (backupRes.ok) {
+                        csvText1 = await backupRes.text();
+                        fundsData = parseCSVFull(csvText1);
+                        console.log(`使用备选文件 data.csv 加载成功`);
+                    } else {
+                        throw new Error('所有CSV文件都加载失败');
+                    }
+                }
+            } catch (backupError) {
+                console.error('加载昨天的CSV文件失败:', backupError);
+                throw new Error('所有CSV文件都加载失败');
             }
         }
         
@@ -194,6 +220,9 @@ async function loadAllData() {
         // 自动显示基金温度表格
         renderFundTable();
         console.log('基金温度表格渲染完成');
+        
+        // 更新数据日期显示为实际使用的数据日期
+        updateDate(actualDataDate);
         
         showLoading(false);
         
@@ -794,24 +823,52 @@ document.addEventListener('DOMContentLoaded', function() {
 // 计算并显示温度星级
 async function calculateAndShowStarRating() {
     try {
-        // 获取今天的日期
+        // 获取今天和昨天的日期
         const today = new Date();
-        const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
         
-        const response = await fetch(`${todayStr}.csv`);
-        if (!response.ok) {
-            // 如果今天的文件不存在，使用昨天的文件
-            const yesterday = new Date(today);
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
-            
-            const yesterdayResponse = await fetch(`${yesterdayStr}.csv`);
-            if (!yesterdayResponse.ok) {
-                throw new Error('数据加载失败');
+        const formatDate = (date) => {
+            return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        };
+        
+        const todayStr = formatDate(today);
+        const yesterdayStr = formatDate(yesterday);
+        
+        let csvText;
+        let csvFound = false;
+        
+        // 优先使用今天的数据
+        try {
+            const response = await fetch(`${todayStr}.csv`);
+            if (response.ok) {
+                csvText = await response.text();
+                csvFound = true;
+                console.log(`使用今天的数据计算星级: ${todayStr}.csv`);
             }
+        } catch (todayError) {
+            console.error('加载今天的数据计算星级失败:', todayError);
+        }
+        
+        // 如果今天数据未找到，使用昨天的数据
+        if (!csvFound) {
+            try {
+                const response = await fetch(`${yesterdayStr}.csv`);
+                if (response.ok) {
+                    csvText = await response.text();
+                    csvFound = true;
+                    console.log(`使用昨天的数据计算星级: ${yesterdayStr}.csv`);
+                }
+            } catch (yesterdayError) {
+                console.error('加载昨天的数据计算星级失败:', yesterdayError);
+            }
+        }
+        
+        if (!csvFound) {
+            console.log('未找到可用数据计算星级');
             return;
         }
-        const csvText = await response.text();
+        
         const data = parseCSV(csvText);
         
         // 找到中证全指(000985)
@@ -821,6 +878,7 @@ async function calculateAndShowStarRating() {
         });
         
         if (!row) {
+            console.log('未找到中证全指(000985)数据');
             return;
         }
         
@@ -842,6 +900,7 @@ async function calculateAndShowStarRating() {
         
     } catch (error) {
         // 计算温度星级失败，忽略
+        console.error('计算温度星级失败:', error);
     }
 }
 
@@ -884,11 +943,17 @@ function parseCSV(csvText) {
 }
 
 // 更新日期显示
-function updateDate() {
+function updateDate(customDate = null) {
     const dateEl = document.getElementById('dataDate');
     if (dateEl) {
-        const today = new Date();
-        dateEl.textContent = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        if (customDate) {
+            // 使用传入的自定义日期
+            dateEl.textContent = customDate;
+        } else {
+            // 默认显示今天的日期
+            const today = new Date();
+            dateEl.textContent = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+        }
     }
 }
 
