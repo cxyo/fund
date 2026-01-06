@@ -19,15 +19,17 @@
 - 访问 https://github.com 注册账号（如果已有账号可直接登录）
 
 ### 2. 准备文件
-确保你有 `jjwd` 文件夹，包含以下内容：
+确保你有 `fund-main` 文件夹，包含以下内容：
 ```
-jjwd/
+fund-main/
 ├── index.html
 ├── css/style.css
 ├── js/app.js
 ├── images/qrcode.png
-├── data.csv
-└── old_data.csv
+├── code.json
+├── 2026-01-04.csv    # 历史数据文件示例
+├── 2026-01-05.csv    # 历史数据文件示例
+└── 2026-01-06.csv    # 最新数据文件示例
 ```
 
 ---
@@ -76,12 +78,12 @@ GitHub需要token来验证身份，而不是直接用密码。
 
 1. 登录GitHub后，点击右上角 **+** 号，选择 **New repository**
 2. 填写仓库信息：
-   - **Repository name**: `jjwd`
+   - **Repository name**: `fund-main`
    - **Description**: 基金温度表查询网站
    - 选择 **Public**（公开仓库）
    - **不要**勾选 "Add a README file"
 3. 点击 **Create repository**
-4. 复制仓库地址（形如：`https://github.com/你的用户名/jjwd.git`）
+4. 复制仓库地址（形如：`https://github.com/你的用户名/fund-main.git`）
 
 ---
 
@@ -89,11 +91,11 @@ GitHub需要token来验证身份，而不是直接用密码。
 
 ### 步骤1：初始化Git仓库
 
-在本地打开终端（PowerShell或CMD），进入jjwd目录：
+在本地打开终端（PowerShell或CMD），进入fund-main目录：
 
 ```bash
 # 进入项目目录
-cd D:\AI_CODE_project\DEMO\jjwd
+cd D:\AI_CODE_project\DEMO\fund-main
 
 # 初始化Git仓库
 git init
@@ -123,7 +125,7 @@ git commit -m "Initial commit: 基金温度表网站"
 
 ```bash
 # 关联远程仓库（替换为你的仓库地址）
-git remote add origin https://github.com/你的用户名/jjwd.git
+git remote add origin https://github.com/你的用户名/fund-main.git
 ```
 
 ### 步骤5：推送到GitHub
@@ -146,7 +148,7 @@ git push -u origin master
 
 ```bash
 # 进入项目目录
-cd D:\AI_CODE_project\DEMO\jjwd
+cd D:\AI_CODE_project\DEMO\fund-main
 
 # 添加修改的文件
 git add .
@@ -177,7 +179,7 @@ GitHub Pages会自动更新，通常 **1-2分钟后生效**。
 
 部署完成后，访问地址为：
 ```
-https://你的用户名.github.io/jjwd/
+https://你的用户名.github.io/fund-main/
 ```
 
 ---
@@ -218,7 +220,7 @@ git push
 
 ### Q5: CSV数据加载失败？
 
-确保 `data.csv` 文件位于仓库根目录，且文件名正确。GitHub Pages对大小写敏感。
+确保所有日期命名的CSV文件（如2026-01-06.csv）位于仓库根目录，且文件名正确。GitHub Pages对大小写敏感。系统会自动加载所有日期命名的CSV文件。
 
 ### Q6: 图片不显示？
 
@@ -229,7 +231,7 @@ git push
 每次修改后：
 
 ```bash
-cd D:\AI_CODE_project\DEMO\jjwd
+cd D:\AI_CODE_project\DEMO\fund-main
 git add .
 git commit -m "更新说明"
 git push
@@ -277,18 +279,20 @@ git reset --hard HEAD~1
 ## 项目结构说明
 
 ```
-jjwd/
+fund-main/
 ├── index.html        # 主页面（包含HTML结构和表格）
 ├── DEPLOY_GUIDE.md   # 部署教程（本文档）
+├── README.md         # 使用说明文档
 ├── css/
 │   └── style.css     # 样式文件
 ├── js/
-│   └── app.js        # 核心逻辑（数据加载、搜索、表格操作）
+│   └── app.js        # 核心逻辑（数据加载、搜索、表格操作、图表绘制）
 ├── images/
 │   └── qrcode.png    # 二维码图片
-├── data.csv          # 基金数据（主数据源）
-├── old_data.csv      # 历史数据
-└── code.json         # 指数代码配置（自动读取显示）
+├── code.json         # 指数代码配置（自动读取显示）
+├── 2026-01-04.csv    # 历史数据文件示例
+├── 2026-01-05.csv    # 历史数据文件示例
+└── 2026-01-06.csv    # 最新数据文件示例
 ```
 
 ## 技术栈
@@ -296,6 +300,7 @@ jjwd/
 - **HTML5** - 页面结构
 - **CSS3** - 样式设计
 - **JavaScript (ES6+)** - 交互逻辑
+- **ECharts** - 数据可视化图表库（用于历史温度趋势图）
 - **Papa Parse** - CSV解析库
 - **Font Awesome** - 图标库
 
