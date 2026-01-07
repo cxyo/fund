@@ -1686,6 +1686,9 @@ async function getFundNavData(code, days = 30) {
             const pageData = await new Promise((resolve) => {
                 // 定义全局回调函数
                 window[callbackName] = function(data) {
+                    // 清理回调函数
+                    delete window[callbackName];
+                    
                     // 检查API返回状态
                     if (data && data.ErrCode === 0 && data.Data && data.Data.LSJZList) {
                         const lsjzList = data.Data.LSJZList;
@@ -1700,15 +1703,10 @@ async function getFundNavData(code, days = 30) {
                         }));
                         
                         console.log(`[基金净值] 第 ${pageIndex} 页解析后的数据长度: ${formattedData.length}`);
-                        
-                        // 清理回调函数
-                        delete window[callbackName];
-                        
                         resolve(formattedData);
                     } else {
                         console.error(`[基金净值] API返回错误:`, data);
-                        // 清理回调函数
-                        delete window[callbackName];
+                        // 当API返回错误时，尝试使用缓存数据
                         resolve([]);
                     }
                 };
@@ -1813,7 +1811,24 @@ async function showFundNavChart(code, type) {
     
     // 检查是否有数据
     if (navData.length === 0) {
-        showNotification(`暂无${type === '场内' ? '场内' : '场外'}基金 ${code} 的历史净值数据`, 'warning');
+        showNotification(`暂无${type === '场内' ? '场内' : '场外'}基金 ${code} 的历史净值数据或数据获取失败`, 'warning');
+        
+        // 初始化空图表，避免页面显示异常
+        const chartContainer = document.getElementById('temperatureChart');
+        if (chartContainer) {
+            const chart = echarts.init(chartContainer);
+            chart.setOption({
+                title: {
+                    text: '暂无净值数据',
+                    left: 'center',
+                    top: 'middle',
+                    textStyle: {
+                        color: '#999'
+                    }
+                },
+                series: []
+            });
+        }
         return;
     }
     
