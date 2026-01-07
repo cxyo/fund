@@ -218,47 +218,83 @@ async function loadAllData() {
         let csvText1, csvText2;
         let actualDataDate = yesterdayStr; // 默认使用昨天的日期作为数据日期
         
-        // 尝试从本地或GitHub加载今天的CSV文件
+        // 检查当前时间，如果在晚上7点之前，直接使用昨天的数据，不尝试加载今天的文件
+        const now = new Date();
+        const hour = now.getHours();
+        const useTodayData = hour >= 19; // 晚上7点以后才尝试使用今天的数据
+        
+        // 尝试加载CSV文件
         try {
-            // 优先尝试本地文件
-            const csvRes1 = await fetch(`${todayStr}.csv`);
-            if (csvRes1.ok) {
-                csvText1 = await csvRes1.text();
-                fundsData = parseCSVFull(csvText1);
-                actualDataDate = todayStr; // 更新为今天的日期
+            if (useTodayData) {
+                // 晚上7点以后，优先尝试本地今天的文件
+                const csvRes1 = await fetch(`${todayStr}.csv`);
+                if (csvRes1.ok) {
+                    csvText1 = await csvRes1.text();
+                    fundsData = parseCSVFull(csvText1);
+                    actualDataDate = todayStr; // 更新为今天的日期
+                } else {
+                    // 今天的本地文件不存在，尝试昨天的本地文件
+                    const csvResYesterday = await fetch(`${yesterdayStr}.csv`);
+                    if (csvResYesterday.ok) {
+                        csvText1 = await csvResYesterday.text();
+                        fundsData = parseCSVFull(csvText1);
+                    } else {
+                        // 本地文件都不存在，尝试使用data.csv作为备选
+                        const backupRes = await fetch('data.csv');
+                        if (backupRes.ok) {
+                            csvText1 = await backupRes.text();
+                            fundsData = parseCSVFull(csvText1);
+                        } else {
+                            // 本地文件都失败，尝试从GitHub获取
+                            const githubRepo = localStorage.getItem('githubRepo') || '';
+                            if (githubRepo) {
+                                // 从GitHub获取今天的数据
+                                const githubUrl = `https://cdn.jsdelivr.net/gh/${githubRepo}/${todayStr}.csv`;
+                                const githubRes = await fetch(githubUrl);
+                                if (githubRes.ok) {
+                                    csvText1 = await githubRes.text();
+                                    fundsData = parseCSVFull(csvText1);
+                                    actualDataDate = todayStr;
+                                } else {
+                                    // 今天的GitHub数据不存在，尝试昨天的
+                                    const githubYesterdayUrl = `https://cdn.jsdelivr.net/gh/${githubRepo}/${yesterdayStr}.csv`;
+                                    const githubYesterdayRes = await fetch(githubYesterdayUrl);
+                                    if (githubYesterdayRes.ok) {
+                                        csvText1 = await githubYesterdayRes.text();
+                                        fundsData = parseCSVFull(csvText1);
+                                    } else {
+                                        throw new Error('GitHub CSV文件加载失败');
+                                    }
+                                }
+                            } else {
+                                throw new Error('所有CSV文件都加载失败');
+                            }
+                        }
+                    }
+                }
             } else {
-                // 今天的本地文件不存在，尝试昨天的本地文件
+                // 晚上7点之前，直接尝试加载昨天的本地文件
                 const csvResYesterday = await fetch(`${yesterdayStr}.csv`);
                 if (csvResYesterday.ok) {
                     csvText1 = await csvResYesterday.text();
                     fundsData = parseCSVFull(csvText1);
                 } else {
-                    // 本地文件都不存在，尝试使用data.csv作为备选
+                    // 昨天的本地文件不存在，尝试使用data.csv作为备选
                     const backupRes = await fetch('data.csv');
                     if (backupRes.ok) {
                         csvText1 = await backupRes.text();
                         fundsData = parseCSVFull(csvText1);
                     } else {
-                        // 本地文件都失败，尝试从GitHub获取
+                        // 本地文件都失败，尝试从GitHub获取昨天的数据
                         const githubRepo = localStorage.getItem('githubRepo') || '';
                         if (githubRepo) {
-                            // 从GitHub获取今天的数据
-                            const githubUrl = `https://cdn.jsdelivr.net/gh/${githubRepo}/${todayStr}.csv`;
-                            const githubRes = await fetch(githubUrl);
-                            if (githubRes.ok) {
-                                csvText1 = await githubRes.text();
+                            const githubYesterdayUrl = `https://cdn.jsdelivr.net/gh/${githubRepo}/${yesterdayStr}.csv`;
+                            const githubYesterdayRes = await fetch(githubYesterdayUrl);
+                            if (githubYesterdayRes.ok) {
+                                csvText1 = await githubYesterdayRes.text();
                                 fundsData = parseCSVFull(csvText1);
-                                actualDataDate = todayStr;
                             } else {
-                                // 今天的GitHub数据不存在，尝试昨天的
-                                const githubYesterdayUrl = `https://cdn.jsdelivr.net/gh/${githubRepo}/${yesterdayStr}.csv`;
-                                const githubYesterdayRes = await fetch(githubYesterdayUrl);
-                                if (githubYesterdayRes.ok) {
-                                    csvText1 = await githubYesterdayRes.text();
-                                    fundsData = parseCSVFull(csvText1);
-                                } else {
-                                    throw new Error('GitHub CSV文件加载失败');
-                                }
+                                throw new Error('GitHub CSV文件加载失败');
                             }
                         } else {
                             throw new Error('所有CSV文件都加载失败');
@@ -302,15 +338,27 @@ async function loadAllData() {
                 const githubRepo = localStorage.getItem('githubRepo') || '';
                 if (githubRepo) {
                     try {
-                        // 从GitHub获取今天的数据
-                        const githubUrl = `https://cdn.jsdelivr.net/gh/${githubRepo}/${todayStr}.csv`;
-                        const githubRes = await fetch(githubUrl);
-                        if (githubRes.ok) {
-                            csvText1 = await githubRes.text();
-                            fundsData = parseCSVFull(csvText1);
-                            actualDataDate = todayStr;
+                        if (useTodayData) {
+                            // 晚上7点以后，尝试从GitHub获取今天的数据
+                            const githubUrl = `https://cdn.jsdelivr.net/gh/${githubRepo}/${todayStr}.csv`;
+                            const githubRes = await fetch(githubUrl);
+                            if (githubRes.ok) {
+                                csvText1 = await githubRes.text();
+                                fundsData = parseCSVFull(csvText1);
+                                actualDataDate = todayStr;
+                            } else {
+                                // 今天的GitHub数据不存在，尝试昨天的
+                                const githubYesterdayUrl = `https://cdn.jsdelivr.net/gh/${githubRepo}/${yesterdayStr}.csv`;
+                                const githubYesterdayRes = await fetch(githubYesterdayUrl);
+                                if (githubYesterdayRes.ok) {
+                                    csvText1 = await githubYesterdayRes.text();
+                                    fundsData = parseCSVFull(csvText1);
+                                } else {
+                                    throw new Error('GitHub CSV文件加载失败');
+                                }
+                            }
                         } else {
-                            // 今天的GitHub数据不存在，尝试昨天的
+                            // 晚上7点之前，直接从GitHub获取昨天的数据
                             const githubYesterdayUrl = `https://cdn.jsdelivr.net/gh/${githubRepo}/${yesterdayStr}.csv`;
                             const githubYesterdayRes = await fetch(githubYesterdayUrl);
                             if (githubYesterdayRes.ok) {
@@ -444,31 +492,11 @@ async function loadHistoricalData() {
         // 显示加载中
         showLoading(true);
         
-        // 获取当前日期
-        const today = new Date();
-        
-        // 生成过去一年（365天）的日期列表
-        const csvFiles = [];
-        
-        // 首先添加当前日期的CSV文件
-        const todayStr = today.toISOString().split('T')[0];
-        csvFiles.push(`${todayStr}.csv`);
-        
-        // 然后添加过去365天的日期
-        for (let i = 1; i <= 365; i++) {
-            const date = new Date();
-            date.setDate(today.getDate() - i);
-            const dateStr = date.toISOString().split('T')[0];
-            csvFiles.push(`${dateStr}.csv`);
-        }
-        
-        // 添加已知的历史文件（确保所有已有文件都被包含）
-        const additionalKnownFiles = [
+        // 只加载已知存在的CSV文件，避免大量404请求
+        const allCsvFiles = [
             '2025-12-24.csv',
             '2025-12-25.csv',
             '2025-12-26.csv',
-            '2025-12-27.csv',
-            '2025-12-28.csv',
             '2025-12-29.csv',
             '2025-12-30.csv',
             '2025-12-31.csv',
@@ -477,8 +505,16 @@ async function loadHistoricalData() {
             '2026-01-07.csv'
         ];
         
-        // 合并并去重
-        const allCsvFiles = [...new Set([...csvFiles, ...additionalKnownFiles])].sort();
+        // 检查今天的CSV文件是否存在，如果存在则添加
+        const today = new Date();
+        const todayStr = today.toISOString().split('T')[0];
+        const todayFile = `${todayStr}.csv`;
+        if (!allCsvFiles.includes(todayFile)) {
+            allCsvFiles.push(todayFile);
+        }
+        
+        // 按日期排序
+        allCsvFiles.sort();
         
         // 加载所有CSV文件数据
         const historicalData = {};
