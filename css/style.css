@@ -569,6 +569,41 @@ td {
     background-color: #138496;
 }
 
+/* 时间范围按钮样式 */
+.time-range-buttons {
+    display: flex;
+    gap: 5px;
+    justify-content: center;
+}
+
+.time-btn {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    background-color: white;
+    color: #333;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: all 0.2s ease;
+}
+
+.time-btn:hover {
+    background-color: #f0f0f0;
+    border-color: #48dbfb;
+}
+
+.time-btn.active {
+    background-color: #48dbfb;
+    color: white;
+    border-color: #48dbfb;
+    font-weight: bold;
+}
+
+.time-btn.active:hover {
+    background-color: #3498db;
+    border-color: #3498db;
+}
+
 /* 导入配置说明区域 */
 .import-section {
     background: rgba(255, 255, 255, 0.03);

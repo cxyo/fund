@@ -19,6 +19,17 @@
             <h2 style="color: #333; margin-bottom: 15px;">📈 历史基金温度曲线图</h2>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <div id="chartTitle" style="font-size: 16px; font-weight: bold; color: #333;"></div>
+                <div>
+                    <div style="margin-bottom: 10px;">选择时间范围：</div>
+                    <div class="time-range-buttons">
+                        <button onclick="changeChartDays(365)" class="time-btn active">365天</button>
+                        <button onclick="changeChartDays(180)" class="time-btn">180天</button>
+                        <button onclick="changeChartDays(90)" class="time-btn">90天</button>
+                        <button onclick="changeChartDays(45)" class="time-btn">45天</button>
+                        <button onclick="changeChartDays(30)" class="time-btn">30天</button>
+                        <button onclick="changeChartDays(15)" class="time-btn">15天</button>
+                    </div>
+                </div>
                 <button onclick="closeChart()" style="padding: 8px 16px; background-color: #ff6b6b; color: white; border: none; border-radius: 4px; cursor: pointer; transition: all 0.3s;">关闭图表</button>
             </div>
             <div id="temperatureChart" style="width: 100%; height: 500px; background-color: white; border-radius: 8px; padding: 10px; box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);"></div>
@@ -117,6 +128,8 @@
                             <th>今年涨跌</th>
                             <th>上一日涨跌</th>
                             <th>上两日涨跌</th>
+                            <th>场内代码</th>
+                            <th>场外代码</th>
                             <th>关注度</th>
                         </tr>
                     </thead>
