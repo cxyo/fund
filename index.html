@@ -16,18 +16,20 @@
         
         <!-- 图表区域 -->
         <div class="chart-section" style="display: none; background-color: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 10px; margin: 20px 0; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); position: sticky; top: 20px; z-index: 1000;">
-            <h2 style="color: #333; margin-bottom: 15px;">📈 历史基金温度曲线图</h2>
+            <h2 style="color: #333; margin-bottom: 15px;">📈 历史净值曲线图</h2>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <div id="chartTitle" style="font-size: 16px; font-weight: bold; color: #333;"></div>
                 <div>
                     <div style="margin-bottom: 10px;">选择时间范围：</div>
                     <div class="time-range-buttons">
-                        <button onclick="changeChartDays(365)" class="time-btn active">365天</button>
-                        <button onclick="changeChartDays(180)" class="time-btn">180天</button>
-                        <button onclick="changeChartDays(90)" class="time-btn">90天</button>
-                        <button onclick="changeChartDays(45)" class="time-btn">45天</button>
-                        <button onclick="changeChartDays(30)" class="time-btn">30天</button>
+                        <button onclick="changeChartDays(5)" class="time-btn">5天</button>
+                        <button onclick="changeChartDays(10)" class="time-btn">10天</button>
                         <button onclick="changeChartDays(15)" class="time-btn">15天</button>
+                        <button onclick="changeChartDays(20)" class="time-btn active">20天</button>
+                        <button onclick="changeChartDays(30)" class="time-btn">30天</button>
+                        <button onclick="changeChartDays(45)" class="time-btn">45天</button>
+                        <button onclick="changeChartDays(90)" class="time-btn">90天</button>
+                        <button onclick="changeChartDays(180)" class="time-btn">180天</button>
                     </div>
                 </div>
                 <button onclick="closeChart()" style="padding: 8px 16px; background-color: #ff6b6b; color: white; border: none; border-radius: 4px; cursor: pointer; transition: all 0.3s;">关闭图表</button>

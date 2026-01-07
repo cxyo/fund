@@ -138,16 +138,39 @@ let selectedCategory = null;
 // 缓存相关设置
 const CACHE_EXPIRE_TIME = 24 * 60 * 60 * 1000; // 缓存过期时间：24小时
 let fundNavCache = {}; // 基金净值数据缓存
+let fundTempCache = {}; // 基金温度数据缓存
+
+// 每天晚上7点（19:00）更新数据的时间戳
+function getNextUpdateTime() {
+    const now = new Date();
+    const nextUpdate = new Date(now);
+    nextUpdate.setHours(19, 0, 0, 0);
+    
+    // 如果当前时间已经过了今天的7点，那么设置为明天的7点
+    if (now > nextUpdate) {
+        nextUpdate.setDate(nextUpdate.getDate() + 1);
+    }
+    
+    return nextUpdate.getTime();
+}
 
 // 初始化缓存（从localStorage加载）
 function initCache() {
     try {
-        const cacheStr = localStorage.getItem('fundNavCache');
-        if (cacheStr) {
-            fundNavCache = JSON.parse(cacheStr);
+        // 加载基金净值缓存
+        const navCacheStr = localStorage.getItem('fundNavCache');
+        if (navCacheStr) {
+            fundNavCache = JSON.parse(navCacheStr);
+        }
+        
+        // 加载基金温度缓存
+        const tempCacheStr = localStorage.getItem('fundTempCache');
+        if (tempCacheStr) {
+            fundTempCache = JSON.parse(tempCacheStr);
         }
     } catch (error) {
         fundNavCache = {};
+        fundTempCache = {};
     }
 }
 
@@ -155,18 +178,27 @@ function initCache() {
 function saveCache() {
     try {
         localStorage.setItem('fundNavCache', JSON.stringify(fundNavCache));
+        localStorage.setItem('fundTempCache', JSON.stringify(fundTempCache));
     } catch (error) {
     }
 }
 
 // 检查缓存是否有效
-function isCacheValid(key) {
-    if (!fundNavCache[key]) {
+function isCacheValid(key, cacheType = 'nav') {
+    const cache = cacheType === 'nav' ? fundNavCache : fundTempCache;
+    if (!cache[key]) {
         return false;
     }
-    const cache = fundNavCache[key];
+    
     const now = Date.now();
-    return now - cache.timestamp < CACHE_EXPIRE_TIME;
+    // 如果是基金温度数据，检查是否到了明天的7点
+    if (cacheType === 'temp') {
+        const nextUpdateTime = getNextUpdateTime();
+        return now < nextUpdateTime;
+    }
+    
+    // 基金净值数据使用常规过期时间
+    return now - cache[key].timestamp < CACHE_EXPIRE_TIME;
 }
 
 // 图表状态变量，用于存储当前图表的信息
@@ -192,6 +224,22 @@ document.addEventListener('DOMContentLoaded', function() {
 // 加载所有数据
 async function loadAllData() {
     try {
+        // 检查基金温度数据缓存是否有效
+        const cacheKey = 'fundTempData';
+        if (isCacheValid(cacheKey, 'temp')) {
+            console.log('[基金温度] 使用缓存数据');
+            fundsData = fundTempCache[cacheKey].fundsData;
+            oldData = fundTempCache[cacheKey].oldData;
+            codeConfig = fundTempCache[cacheKey].codeConfig;
+            
+            // 显示数据
+            renderFundTable();
+            updateDate(fundTempCache[cacheKey].actualDataDate);
+            calculateAndShowStarRating();
+            showLoading(false);
+            return;
+        }
+        
         // 显示加载中
         showLoading(true);
         
@@ -581,6 +629,20 @@ async function loadAllData() {
         
         // 重新计算并显示温度星级
         calculateAndShowStarRating();
+        
+        // 保存基金温度数据到缓存
+        const cacheKey = 'fundTempData';
+        fundTempCache[cacheKey] = {
+            fundsData: fundsData,
+            oldData: oldData,
+            codeConfig: codeConfig,
+            actualDataDate: actualDataDate,
+            timestamp: Date.now()
+        };
+        
+        // 保存缓存到localStorage
+        saveCache();
+        console.log('[基金温度] 数据已保存到缓存');
         
         showLoading(false);
         
