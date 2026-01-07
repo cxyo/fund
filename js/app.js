@@ -138,39 +138,16 @@ let selectedCategory = null;
 // 缓存相关设置
 const CACHE_EXPIRE_TIME = 24 * 60 * 60 * 1000; // 缓存过期时间：24小时
 let fundNavCache = {}; // 基金净值数据缓存
-let fundTempCache = {}; // 基金温度数据缓存
-
-// 每天晚上7点（19:00）更新数据的时间戳
-function getNextUpdateTime() {
-    const now = new Date();
-    const nextUpdate = new Date(now);
-    nextUpdate.setHours(19, 0, 0, 0);
-    
-    // 如果当前时间已经过了今天的7点，那么设置为明天的7点
-    if (now > nextUpdate) {
-        nextUpdate.setDate(nextUpdate.getDate() + 1);
-    }
-    
-    return nextUpdate.getTime();
-}
 
 // 初始化缓存（从localStorage加载）
 function initCache() {
     try {
-        // 加载基金净值缓存
-        const navCacheStr = localStorage.getItem('fundNavCache');
-        if (navCacheStr) {
-            fundNavCache = JSON.parse(navCacheStr);
-        }
-        
-        // 加载基金温度缓存
-        const tempCacheStr = localStorage.getItem('fundTempCache');
-        if (tempCacheStr) {
-            fundTempCache = JSON.parse(tempCacheStr);
+        const cacheStr = localStorage.getItem('fundNavCache');
+        if (cacheStr) {
+            fundNavCache = JSON.parse(cacheStr);
         }
     } catch (error) {
         fundNavCache = {};
-        fundTempCache = {};
     }
 }
 
@@ -178,27 +155,18 @@ function initCache() {
 function saveCache() {
     try {
         localStorage.setItem('fundNavCache', JSON.stringify(fundNavCache));
-        localStorage.setItem('fundTempCache', JSON.stringify(fundTempCache));
     } catch (error) {
     }
 }
 
 // 检查缓存是否有效
-function isCacheValid(key, cacheType = 'nav') {
-    const cache = cacheType === 'nav' ? fundNavCache : fundTempCache;
-    if (!cache[key]) {
+function isCacheValid(key) {
+    if (!fundNavCache[key]) {
         return false;
     }
-    
+    const cache = fundNavCache[key];
     const now = Date.now();
-    // 如果是基金温度数据，检查是否到了明天的7点
-    if (cacheType === 'temp') {
-        const nextUpdateTime = getNextUpdateTime();
-        return now < nextUpdateTime;
-    }
-    
-    // 基金净值数据使用常规过期时间
-    return now - cache[key].timestamp < CACHE_EXPIRE_TIME;
+    return now - cache.timestamp < CACHE_EXPIRE_TIME;
 }
 
 // 图表状态变量，用于存储当前图表的信息
@@ -224,22 +192,6 @@ document.addEventListener('DOMContentLoaded', function() {
 // 加载所有数据
 async function loadAllData() {
     try {
-        // 检查基金温度数据缓存是否有效
-        const cacheKey = 'fundTempData';
-        if (isCacheValid(cacheKey, 'temp')) {
-            console.log('[基金温度] 使用缓存数据');
-            fundsData = fundTempCache[cacheKey].fundsData;
-            oldData = fundTempCache[cacheKey].oldData;
-            codeConfig = fundTempCache[cacheKey].codeConfig;
-            
-            // 显示数据
-            renderFundTable();
-            updateDate(fundTempCache[cacheKey].actualDataDate);
-            calculateAndShowStarRating();
-            showLoading(false);
-            return;
-        }
-        
         // 显示加载中
         showLoading(true);
         
@@ -311,63 +263,11 @@ async function loadAllData() {
                                         csvText1 = await githubYesterdayRes.text();
                                         fundsData = parseCSVFull(csvText1);
                                     } else {
-                                        // 如果GitHub数据也失败，尝试使用已知存在的历史CSV文件
-                                        const knownCsvFiles = [
-                                            '2025-12-31.csv',
-                                            '2026-01-05.csv',
-                                            '2026-01-06.csv',
-                                            '2026-01-07.csv'
-                                        ];
-                                        
-                                        // 尝试加载已知的历史CSV文件
-                                        for (const knownFile of knownCsvFiles) {
-                                            try {
-                                                const knownRes = await fetch(knownFile);
-                                                if (knownRes.ok) {
-                                                    csvText1 = await knownRes.text();
-                                                    fundsData = parseCSVFull(csvText1);
-                                                    actualDataDate = knownFile.replace('.csv', '');
-                                                    break;
-                                                }
-                                            } catch (knownError) {
-                                                // 忽略单个文件的错误，继续尝试下一个
-                                            }
-                                        }
-                                        
-                                        // 如果所有已知文件都失败，抛出错误
-                                        if (!csvText1) {
-                                            throw new Error('所有CSV文件都加载失败');
-                                        }
+                                        throw new Error('GitHub CSV文件加载失败');
                                     }
                                 }
                             } else {
-                                // 如果没有设置githubRepo，尝试使用已知存在的历史CSV文件
-                                const knownCsvFiles = [
-                                    '2025-12-31.csv',
-                                    '2026-01-05.csv',
-                                    '2026-01-06.csv',
-                                    '2026-01-07.csv'
-                                ];
-                                
-                                // 尝试加载已知的历史CSV文件
-                                for (const knownFile of knownCsvFiles) {
-                                    try {
-                                        const knownRes = await fetch(knownFile);
-                                        if (knownRes.ok) {
-                                            csvText1 = await knownRes.text();
-                                            fundsData = parseCSVFull(csvText1);
-                                            actualDataDate = knownFile.replace('.csv', '');
-                                            break;
-                                        }
-                                    } catch (knownError) {
-                                        // 忽略单个文件的错误，继续尝试下一个
-                                    }
-                                }
-                                
-                                // 如果所有已知文件都失败，抛出错误
-                                if (!csvText1) {
-                                    throw new Error('所有CSV文件都加载失败');
-                                }
+                                throw new Error('所有CSV文件都加载失败');
                             }
                         }
                     }
@@ -394,62 +294,10 @@ async function loadAllData() {
                                 csvText1 = await githubYesterdayRes.text();
                                 fundsData = parseCSVFull(csvText1);
                             } else {
-                                // 如果GitHub数据也失败，尝试使用已知存在的历史CSV文件
-                                const knownCsvFiles = [
-                                    '2025-12-31.csv',
-                                    '2026-01-05.csv',
-                                    '2026-01-06.csv',
-                                    '2026-01-07.csv'
-                                ];
-                                
-                                // 尝试加载已知的历史CSV文件
-                                for (const knownFile of knownCsvFiles) {
-                                    try {
-                                        const knownRes = await fetch(knownFile);
-                                        if (knownRes.ok) {
-                                            csvText1 = await knownRes.text();
-                                            fundsData = parseCSVFull(csvText1);
-                                            actualDataDate = knownFile.replace('.csv', '');
-                                            break;
-                                        }
-                                    } catch (knownError) {
-                                        // 忽略单个文件的错误，继续尝试下一个
-                                    }
-                                }
-                                
-                                // 如果所有已知文件都失败，抛出错误
-                                if (!csvText1) {
-                                    throw new Error('所有CSV文件都加载失败');
-                                }
+                                throw new Error('GitHub CSV文件加载失败');
                             }
                         } else {
-                            // 如果没有设置githubRepo，尝试使用已知存在的历史CSV文件
-                            const knownCsvFiles = [
-                                '2025-12-31.csv',
-                                '2026-01-05.csv',
-                                '2026-01-06.csv',
-                                '2026-01-07.csv'
-                            ];
-                            
-                            // 尝试加载已知的历史CSV文件
-                            for (const knownFile of knownCsvFiles) {
-                                try {
-                                    const knownRes = await fetch(knownFile);
-                                    if (knownRes.ok) {
-                                        csvText1 = await knownRes.text();
-                                        fundsData = parseCSVFull(csvText1);
-                                        actualDataDate = knownFile.replace('.csv', '');
-                                        break;
-                                    }
-                                } catch (knownError) {
-                                    // 忽略单个文件的错误，继续尝试下一个
-                                }
-                            }
-                            
-                            // 如果所有已知文件都失败，抛出错误
-                            if (!csvText1) {
-                                throw new Error('所有CSV文件都加载失败');
-                            }
+                            throw new Error('所有CSV文件都加载失败');
                         }
                     }
                 }
@@ -629,20 +477,6 @@ async function loadAllData() {
         
         // 重新计算并显示温度星级
         calculateAndShowStarRating();
-        
-        // 保存基金温度数据到缓存
-        const cacheKey = 'fundTempData';
-        fundTempCache[cacheKey] = {
-            fundsData: fundsData,
-            oldData: oldData,
-            codeConfig: codeConfig,
-            actualDataDate: actualDataDate,
-            timestamp: Date.now()
-        };
-        
-        // 保存缓存到localStorage
-        saveCache();
-        console.log('[基金温度] 数据已保存到缓存');
         
         showLoading(false);
         
@@ -1658,118 +1492,97 @@ async function getFundNavData(code, days = 30) {
         // 使用正确的API地址
         const url = `https://api.fund.eastmoney.com/f10/lsjz`;
         
-        // 计算需要的总页数（每页最多20条数据）
-        const totalPages = Math.ceil(days / 20);
-        console.log(`[基金净值] 需要获取 ${totalPages} 页数据`);
+        // 构建请求参数
+        const params = new URLSearchParams();
+        params.append('fundCode', code); // 使用fundCode替代code
+        params.append('pageIndex', 1);
+        params.append('pageSize', 60); // 每页60条数据
+        params.append('startDate', startDateStr);
+        params.append('endDate', endDateStr);
+        params.append('_', Date.now()); // 添加时间戳参数
         
-        // 存储所有页的数据
-        let allFormattedData = [];
+        const callbackName = `jQuery18305932565413289966_${Date.now()}`;
+        const fullUrl = `${url}?${params.toString()}&callback=${callbackName}`;
+        console.log(`[基金净值] 请求URL: ${fullUrl}`);
         
-        // 循环获取所有页面数据
-        for (let pageIndex = 1; pageIndex <= totalPages; pageIndex++) {
-            console.log(`[基金净值] 获取第 ${pageIndex} 页数据`);
-            
-            // 构建请求参数
-            const params = new URLSearchParams();
-            params.append('fundCode', code); // 使用fundCode替代code
-            params.append('pageIndex', pageIndex);
-            params.append('pageSize', 20); // 每页最多20条数据
-            params.append('startDate', startDateStr);
-            params.append('endDate', endDateStr);
-            params.append('_', Date.now()); // 添加时间戳参数
-            
-            const callbackName = `jQuery18305932565413289966_${Date.now()}_${pageIndex}`;
-            const fullUrl = `${url}?${params.toString()}&callback=${callbackName}`;
-            console.log(`[基金净值] 请求URL: ${fullUrl}`);
-            
-            // 创建Promise来处理JSONP请求
-            const pageData = await new Promise((resolve) => {
-                // 定义全局回调函数
-                window[callbackName] = function(data) {
+        // 创建Promise来处理JSONP请求
+        return new Promise((resolve) => {
+            // 定义全局回调函数
+            window[callbackName] = function(data) {
+                console.log(`[基金净值] 原始返回数据:`, data);
+                
+                // 检查API返回状态
+                if (data && data.ErrCode === 0 && data.Data && data.Data.LSJZList) {
+                    const lsjzList = data.Data.LSJZList;
+                    console.log(`[基金净值] 原始净值列表长度: ${lsjzList.length}`);
+                    
+                    // 转换为标准化的数据格式
+                    const formattedData = lsjzList.map(item => ({
+                        '净值日期': item.FSRQ, // 净值日期
+                        '单位净值': item.DWJZ, // 单位净值
+                        '累计净值': item.LJJZ, // 累计净值
+                        '日增长率': item.JZZZL || '' // 日增长率
+                    }));
+                    
+                    console.log(`[基金净值] 解析后的数据长度: ${formattedData.length}`);
+                    
+                    // 将数据存入缓存
+                    fundNavCache[cacheKey] = {
+                        data: formattedData,
+                        timestamp: Date.now()
+                    };
+                    
+                    // 保存缓存到localStorage
+                    saveCache();
+                    
                     // 清理回调函数
                     delete window[callbackName];
                     
-                    // 检查API返回状态
-                    if (data && data.ErrCode === 0 && data.Data && data.Data.LSJZList) {
-                        const lsjzList = data.Data.LSJZList;
-                        console.log(`[基金净值] 第 ${pageIndex} 页原始净值列表长度: ${lsjzList.length}`);
-                        
-                        // 转换为标准化的数据格式
-                        const formattedData = lsjzList.map(item => ({
-                            '净值日期': item.FSRQ, // 净值日期
-                            '单位净值': item.DWJZ, // 单位净值
-                            '累计净值': item.LJJZ, // 累计净值
-                            '日增长率': item.JZZZL || '' // 日增长率
-                        }));
-                        
-                        console.log(`[基金净值] 第 ${pageIndex} 页解析后的数据长度: ${formattedData.length}`);
-                        resolve(formattedData);
-                    } else {
-                        console.error(`[基金净值] API返回错误:`, data);
-                        // 当API返回错误时，尝试使用缓存数据
-                        resolve([]);
-                    }
-                };
-                
-                // 创建script标签
-                const script = document.createElement('script');
-                script.src = fullUrl;
-                script.type = 'text/javascript';
-                script.charset = 'utf-8';
-                
-                // 10秒超时
-                const timeout = setTimeout(() => {
-                    console.error(`[基金净值] 请求超时: ${fullUrl}`);
-                    // 清理资源
-                    if (script.parentNode) {
-                        script.parentNode.removeChild(script);
-                    }
-                    if (window[callbackName]) {
-                        delete window[callbackName];
-                    }
+                    resolve(formattedData);
+                } else {
+                    console.error(`[基金净值] API返回错误:`, data);
+                    // 清理回调函数
+                    delete window[callbackName];
                     resolve([]);
-                }, 10000);
-                
-                // 错误处理
-                script.onerror = function() {
-                    console.error(`[基金净值] 请求错误: ${fullUrl}`);
-                    // 清理资源
-                    clearTimeout(timeout);
-                    if (script.parentNode) {
-                        script.parentNode.removeChild(script);
-                    }
-                    if (window[callbackName]) {
-                        delete window[callbackName];
-                    }
-                    resolve([]);
-                };
-                
-                // 添加到head并执行
-                document.head.appendChild(script);
-            });
+                }
+            };
             
-            // 合并当前页数据到总数据
-            allFormattedData = [...allFormattedData, ...pageData];
+            // 创建script标签
+            const script = document.createElement('script');
+            script.src = fullUrl;
+            script.type = 'text/javascript';
+            script.charset = 'utf-8';
             
-            // 如果当前页数据不足20条，说明已经是最后一页
-            if (pageData.length < 20) {
-                break;
-            }
-        }
-        
-        console.log(`[基金净值] 总数据长度: ${allFormattedData.length}`);
-        
-        // 将数据存入缓存
-        fundNavCache[cacheKey] = {
-            data: allFormattedData,
-            timestamp: Date.now()
-        };
-        
-        // 保存缓存到localStorage
-        saveCache();
-        
-        // 返回总数据
-        return allFormattedData;
+            // 10秒超时
+            const timeout = setTimeout(() => {
+                console.error(`[基金净值] 请求超时: ${fullUrl}`);
+                // 清理资源
+                if (script.parentNode) {
+                    script.parentNode.removeChild(script);
+                }
+                if (window[callbackName]) {
+                    delete window[callbackName];
+                }
+                resolve([]);
+            }, 10000);
+            
+            // 错误处理
+            script.onerror = function() {
+                console.error(`[基金净值] 请求错误: ${fullUrl}`);
+                // 清理资源
+                clearTimeout(timeout);
+                if (script.parentNode) {
+                    script.parentNode.removeChild(script);
+                }
+                if (window[callbackName]) {
+                    delete window[callbackName];
+                }
+                resolve([]);
+            };
+            
+            // 添加到head并执行
+            document.head.appendChild(script);
+        });
         
     } catch (error) {
         console.error(`[基金净值] 获取数据错误:`, error);
@@ -1779,13 +1592,13 @@ async function getFundNavData(code, days = 30) {
 
 // 显示基金净值图表
 async function showFundNavChart(code, type) {
-    // 更新图表状态，使用默认的20天
+    // 更新图表状态，使用默认的365天
     currentChartState = {
         type: 'nav',
         code: code,
         name: `${type === '场内' ? '场内' : '场外'}基金 ${code}`,
         fundType: type,
-        days: 20 // 使用默认的20天
+        days: 365 // 使用默认的365天
     };
     
     // 显示图表区域
@@ -1811,24 +1624,7 @@ async function showFundNavChart(code, type) {
     
     // 检查是否有数据
     if (navData.length === 0) {
-        showNotification(`暂无${type === '场内' ? '场内' : '场外'}基金 ${code} 的历史净值数据或数据获取失败`, 'warning');
-        
-        // 初始化空图表，避免页面显示异常
-        const chartContainer = document.getElementById('temperatureChart');
-        if (chartContainer) {
-            const chart = echarts.init(chartContainer);
-            chart.setOption({
-                title: {
-                    text: '暂无净值数据',
-                    left: 'center',
-                    top: 'middle',
-                    textStyle: {
-                        color: '#999'
-                    }
-                },
-                series: []
-            });
-        }
+        showNotification(`暂无${type === '场内' ? '场内' : '场外'}基金 ${code} 的历史净值数据`, 'warning');
         return;
     }
     
