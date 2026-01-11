@@ -1624,8 +1624,72 @@ async function getFundNavData(code, days = 20) {
         
         // 检查缓存是否有效
         if (isCacheValid(cacheKey)) {
-            console.log(`[基金净值] 使用缓存数据: ${code}_${days}`);
-            return fundNavCache[cacheKey].data;
+            // 检查缓存数据是否有效
+            if (fundNavCache[cacheKey].data && fundNavCache[cacheKey].data.length > 0) {
+                console.log(`[基金净值] 使用缓存数据: ${code}_${days}`);
+                return fundNavCache[cacheKey].data;
+            } else {
+                console.log(`[基金净值] 缓存数据无效，尝试从本地文件获取...`);
+            }
+        }
+        
+        // 首先尝试从本地JSON文件获取数据
+        try {
+            console.log('[基金净值] 尝试从本地文件获取数据...');
+            const localDataResponse = await fetch('data/fund-nav-data.json');
+            console.log(`[基金净值] 本地文件请求状态: ${localDataResponse.status}`);
+            
+            if (localDataResponse.ok) {
+                console.log('[基金净值] 本地文件请求成功，开始解析数据...');
+                const localData = await localDataResponse.json();
+                console.log('[基金净值] 本地文件解析成功');
+                
+                // 检查本地数据是否包含当前基金代码
+                console.log(`[基金净值] 检查本地数据是否包含基金 ${code}...`);
+                if (localData[code]) {
+                    console.log(`[基金净值] 本地数据包含基金 ${code}`);
+                    if (localData[code].Data) {
+                        console.log(`[基金净值] 本地数据包含基金 ${code} 的Data字段`);
+                        if (localData[code].Data.LSJZList) {
+                            const lsjzList = localData[code].Data.LSJZList;
+                            console.log(`[基金净值] 本地数据包含基金 ${code}，共 ${lsjzList.length} 条记录`);
+                            
+                            // 转换为标准化的数据格式
+                            const formattedData = lsjzList.map(item => ({
+                                '净值日期': item.FSRQ, // 净值日期
+                                '单位净值': item.DWJZ, // 单位净值
+                                '累计净值': item.LJJZ, // 累计净值
+                                '日增长率': item.JZZZL || '' // 日增长率
+                            }));
+                            
+                            // 根据请求的天数，只返回最近的days条数据
+                            const filteredData = formattedData.slice(0, days);
+                            console.log(`[基金净值] 根据请求天数过滤后的数据长度: ${filteredData.length}`);
+                            
+                            // 将数据存入缓存
+                            fundNavCache[cacheKey] = {
+                                data: filteredData,
+                                timestamp: Date.now()
+                            };
+                            
+                            // 保存缓存到localStorage
+                            saveCache();
+                            
+                            return filteredData;
+                        } else {
+                            console.log(`[基金净值] 本地数据不包含基金 ${code} 的LSJZList字段`);
+                        }
+                    } else {
+                        console.log(`[基金净值] 本地数据不包含基金 ${code} 的Data字段`);
+                    }
+                } else {
+                    console.log(`[基金净值] 本地数据不包含基金 ${code}`);
+                }
+            } else {
+                console.log(`[基金净值] 本地文件请求失败，状态码: ${localDataResponse.status}`);
+            }
+        } catch (localError) {
+            console.log('[基金净值] 本地文件获取失败，尝试从API获取...', localError.message);
         }
         
         // 计算开始日期和结束日期
