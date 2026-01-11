@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>基金温度表</title>
     <link rel="stylesheet" href="css/style.css">
-    <script type="text/javascript" src="https://assets.pyecharts.org/assets/v5/echarts.min.js"></script>
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -26,10 +26,6 @@
                         <button onclick="changeChartDays(10)" class="time-btn">10天</button>
                         <button onclick="changeChartDays(15)" class="time-btn">15天</button>
                         <button onclick="changeChartDays(20)" class="time-btn active">20天</button>
-                        <button onclick="changeChartDays(30)" class="time-btn">30天</button>
-                        <button onclick="changeChartDays(45)" class="time-btn">45天</button>
-                        <button onclick="changeChartDays(90)" class="time-btn">90天</button>
-                        <button onclick="changeChartDays(180)" class="time-btn">180天</button>
                     </div>
                 </div>
                 <button onclick="closeChart()" style="padding: 8px 16px; background-color: #ff6b6b; color: white; border: none; border-radius: 4px; cursor: pointer; transition: all 0.3s;">关闭图表</button>

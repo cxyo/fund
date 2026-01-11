@@ -7,6 +7,7 @@
 - [安装Git](#安装git)
 - [创建GitHub仓库](#创建github仓库)
 - [部署代码](#部署代码)
+- [使用GitHub Actions自动更新数据](#使用github-actions自动更新数据)
 - [后续更新](#后续更新)
 - [常见问题](#常见问题)
 - [项目结构说明](#项目结构说明)
@@ -305,6 +306,61 @@ fund-main/
 - **Font Awesome** - 图标库
 
 ---
+
+## 使用GitHub Actions自动更新数据
+
+本项目包含一个GitHub Actions工作流，可以手动触发更新基金净值数据，避免频繁调用API导致被封号。
+
+### 工作流功能
+
+- 工作流名称：Update Fund Data
+- 触发方式：手动触发
+- 功能：爬取所有基金代码的180天历史净值数据
+- 输出：生成 `data/fund-nav-data.json` 文件
+- 好处：避免页面访问时频繁调用API，提高页面加载速度
+
+### 手动触发工作流
+
+1. 登录GitHub账号，进入仓库页面
+2. 点击顶部导航栏的「Actions」选项卡
+3. 在左侧找到「Update Fund Data」工作流
+4. 点击「Run workflow」按钮
+5. 在弹出的表单中，输入要获取的天数（默认180天）
+6. 点击「Run workflow」按钮开始更新数据
+
+### 处理403权限错误
+
+如果您在运行工作流时遇到类似以下错误：
+```
+remote: Permission to username/repo.git denied to github-actions[bot].
+fatal: unable to access 'https://github.com/username/repo/': The requested URL returned error: 403
+```
+
+这是因为GitHub Actions机器人没有足够的权限推送更改到仓库。解决方法如下：
+
+#### 方法1：修改仓库权限设置（推荐）
+
+1. 进入仓库页面，点击「Settings」→「Actions」→「General」
+2. 找到「Workflow permissions」部分
+3. 选择「Read and write permissions」
+4. 点击「Save」保存设置
+
+#### 方法2：创建Personal Access Token (PAT)
+
+1. 点击GitHub头像 →「Settings」→「Developer settings」→「Personal access tokens」→「Tokens (classic)」
+2. 点击「Generate new token」→「Generate new token (classic)」
+3. 在「Note」字段填写描述，例如「GitHub Actions Fund Data Update」
+4. 在「Select scopes」部分，勾选「repo」权限组下的所有选项
+5. 点击「Generate token」
+6. 复制生成的Token，妥善保存（此Token只会显示一次）
+7. 进入仓库页面，点击「Settings」→「Secrets and variables」→「Actions」
+8. 点击「New repository secret」
+9. 「Name」填写「GH_PAT」，「Secret」粘贴刚才复制的Token
+10. 点击「Add secret」
+11. 修改`.github/workflows/update-fund-data.yml`文件，将最后一步的git push命令改为使用Token：
+    ```yaml
+    git push https://${{ secrets.GH_PAT }}@github.com/${{ github.repository }}.git
+    ```
 
 **恭喜！你的基金温度表网站已经上线了！** 🎉
 
