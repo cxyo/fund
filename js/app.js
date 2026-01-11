@@ -631,7 +631,46 @@ async function loadAllData() {
         showLoading(false);
         
     } catch (error) {
-        // 加载数据失败
+        console.error('[基金温度] 加载数据失败:', error.message);
+        
+        // 尝试从localStorage加载旧数据
+        try {
+            const cacheKey = 'fundTempData_v3'; // 使用旧版本的缓存键，尝试获取之前的数据
+            if (localStorage.getItem('fundTempData_v3')) {
+                const tempData = JSON.parse(localStorage.getItem('fundTempData_v3'));
+                fundsData = tempData.fundsData;
+                oldData = tempData.oldData;
+                codeConfig = tempData.codeConfig;
+                
+                // 显示数据
+                renderFundTable();
+                updateDate(tempData.actualDataDate);
+                calculateAndShowStarRating();
+                showLoading(false);
+                return;
+            } else {
+                // 尝试使用v4版本的缓存
+                const cacheKeyV4 = 'fundTempData_v4';
+                if (localStorage.getItem(cacheKeyV4)) {
+                    const tempData = JSON.parse(localStorage.getItem(cacheKeyV4));
+                    fundsData = tempData.fundsData;
+                    oldData = tempData.oldData;
+                    codeConfig = tempData.codeConfig;
+                    
+                    // 显示数据
+                    renderFundTable();
+                    updateDate(tempData.actualDataDate);
+                    calculateAndShowStarRating();
+                    showLoading(false);
+                    return;
+                }
+            }
+        } catch (e) {
+            // 从localStorage加载失败，忽略
+        }
+        
+        // 如果没有缓存数据，显示默认的2026-01-09数据日期
+        updateDate('2026-01-09');
         showLoading(false);
     }
 }
@@ -1451,9 +1490,10 @@ function updateDate(customDate = null) {
             // 使用传入的自定义日期
             dateEl.textContent = customDate;
         } else {
-            // 默认显示今天的日期
-            const today = new Date();
-            dateEl.textContent = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+            // 默认显示昨天的日期，而不是今天的日期，避免数据未加载完成时显示错误日期
+            const yesterday = new Date();
+            yesterday.setDate(yesterday.getDate() - 1);
+            dateEl.textContent = `${yesterday.getFullYear()}-${String(yesterday.getMonth() + 1).padStart(2, '0')}-${String(yesterday.getDate()).padStart(2, '0')}`;
         }
     }
 }
