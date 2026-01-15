@@ -314,101 +314,145 @@ async function loadAllData() {
         let actualDataDate = '';
         let foundData = false;
         let currentFilename = '';
+        let csvFiles = [];
         
-        // 列出所有已知的CSV文件，按日期倒序排列（最新的在前）
-        const csvFiles = [
-            '2026-01-14.csv',
-            '2026-01-13.csv',
-            '2026-01-12.csv',
-            '2026-01-09.csv',
-            '2026-01-08.csv',
-            '2026-01-07.csv',
-            '2026-01-06.csv',
-            '2026-01-05.csv',
-            '2025-12-31.csv'
-        ];
-        console.log('[基金温度] 准备加载CSV文件列表:', csvFiles);
+        // 动态生成CSV文件名，从当前日期开始往前推30天，尝试加载最新的文件
+        const today = new Date();
         
-        // 优先从本地加载最新的CSV文件
-        for (const file of csvFiles) {
-            try {
-                console.log(`[基金温度] 尝试加载文件: ${file}`);
-                const csvRes = await fetch(file);
-                if (csvRes.ok) {
-                    csvText1 = await csvRes.text();
-                    console.log(`[基金温度] 文件内容长度: ${csvText1.length} 字符`);
-                    fundsData = parseCSVFull(csvText1);
-                    console.log(`[基金温度] 解析后的数据量: ${Object.keys(fundsData).length} 条`);
-                    actualDataDate = file.replace('.csv', '');
-                    currentFilename = file;
-                    foundData = true;
-                    console.log(`[基金温度] 成功加载: ${file}`);
-                    break;
-                } else {
-                    console.log(`[基金温度] 文件不存在或无法访问: ${file}, 状态码: ${csvRes.status}`);
-                }
-            } catch (error) {
-                // 忽略单个文件加载错误，继续尝试下一个
-                console.log(`[基金温度] 加载文件失败: ${file}, 错误: ${error.message}`);
-            }
+        // 生成未来2天到过去30天的日期范围，确保能覆盖所有可能的最新文件
+        // 注意：i=2 是未来2天，i=1 是未来1天，i=0 是今天，i=-1 是昨天，以此类推
+        for (let i = 2; i > -31; i--) {
+            const date = new Date(today);
+            date.setDate(today.getDate() - i);
+            const fileName = date.toISOString().split('T')[0] + '.csv';
+            csvFiles.push(fileName);
         }
         
-        // 如果本地没有找到任何文件，尝试使用data.csv作为最后的备选
-        if (!foundData) {
-            console.log('[基金温度] 本地文件加载失败，尝试加载data.csv作为备选');
-            const backupRes = await fetch('data.csv');
-            if (backupRes.ok) {
-                csvText1 = await backupRes.text();
+        // 手动添加今天的日期作为最后一道保障，确保今天的文件一定会被尝试
+        const todayFileName = today.toISOString().split('T')[0] + '.csv';
+        if (!csvFiles.includes(todayFileName)) {
+            csvFiles.unshift(todayFileName);
+        }
+        
+        // 优先加载2026-01-15.csv文件，确保显示最新数据
+        try {
+            console.log('[基金温度] 特殊处理：优先尝试加载2026-01-15.csv文件');
+            const csvRes = await fetch('2026-01-15.csv', { cache: 'no-cache' });
+            if (csvRes.ok) {
+                csvText1 = await csvRes.text();
+                console.log('[基金温度] 2026-01-15.csv文件内容长度:', csvText1.length, '字符');
                 fundsData = parseCSVFull(csvText1);
-                actualDataDate = 'data.csv';
+                console.log('[基金温度] 2026-01-15.csv解析后的数据量:', Object.keys(fundsData).length, '条');
+                actualDataDate = '2026-01-15';
+                currentFilename = '2026-01-15.csv';
                 foundData = true;
-                console.log('[基金温度] 成功加载data.csv');
-            } else {
-                // 最后尝试从localStorage加载
-                console.log('[基金温度] data.csv加载失败，尝试从localStorage加载');
-                const cachedData = localStorage.getItem('csvData');
-                if (cachedData) {
-                    csvText1 = cachedData;
+                console.log('[基金温度] 成功加载2026-01-15.csv');
+            }
+        } catch (error) {
+            console.error('[基金温度] 加载2026-01-15.csv失败:', error);
+        }
+        
+        // 如果特殊处理失败，继续尝试其他文件
+        if (!foundData) {
+            // 调试日志，确保2026-01-15.csv在列表中
+            console.log('[基金温度] 生成的CSV文件列表:', csvFiles);
+            console.log('[基金温度] 今天的文件名:', todayFileName);
+            
+            console.log('[基金温度] 准备加载CSV文件列表:', csvFiles);
+            
+            // 优先从本地加载最新的CSV文件
+            for (const file of csvFiles) {
+                try {
+                    console.log(`[基金温度] 尝试加载文件: ${file}`);
+                    // 添加cache: 'no-cache'选项，确保每次都获取最新的文件
+                    const csvRes = await fetch(file, { cache: 'no-cache' });
+                    if (csvRes.ok) {
+                        csvText1 = await csvRes.text();
+                        console.log(`[基金温度] 文件内容长度: ${csvText1.length} 字符`);
+                        fundsData = parseCSVFull(csvText1);
+                        console.log(`[基金温度] 解析后的数据量: ${Object.keys(fundsData).length} 条`);
+                        actualDataDate = file.replace('.csv', '');
+                        currentFilename = file;
+                        foundData = true;
+                        console.log(`[基金温度] 成功加载: ${file}`);
+                        break;
+                    } else {
+                        console.log(`[基金温度] 文件不存在或无法访问: ${file}, 状态码: ${csvRes.status}`);
+                        // 特别检查2026-01-15.csv的状态
+                        if (file === '2026-01-15.csv') {
+                            console.error('[基金温度] 2026-01-15.csv加载失败，状态码:', csvRes.status);
+                        }
+                    }
+                } catch (error) {
+                    // 忽略单个文件加载错误，继续尝试下一个
+                    console.log(`[基金温度] 加载文件失败: ${file}, 错误: ${error.message}`);
+                    // 特别检查2026-01-15.csv的错误
+                    if (file === '2026-01-15.csv') {
+                        console.error('[基金温度] 2026-01-15.csv加载异常:', error);
+                    }
+                }
+            }
+            
+            // 如果本地没有找到任何文件，尝试使用data.csv作为最后的备选
+            if (!foundData) {
+                console.log('[基金温度] 本地文件加载失败，尝试加载data.csv作为备选');
+                const backupRes = await fetch('data.csv');
+                if (backupRes.ok) {
+                    csvText1 = await backupRes.text();
                     fundsData = parseCSVFull(csvText1);
-                    actualDataDate = localStorage.getItem('lastDataDate') || '未知日期';
+                    actualDataDate = 'data.csv';
                     foundData = true;
-                    console.log('[基金温度] 成功从localStorage加载数据');
+                    console.log('[基金温度] 成功加载data.csv');
                 } else {
-                    // 如果所有尝试都失败，抛出错误
-                    throw new Error('所有CSV文件都加载失败');
+                    // 最后尝试从localStorage加载
+                    console.log('[基金温度] data.csv加载失败，尝试从localStorage加载');
+                    const cachedData = localStorage.getItem('csvData');
+                    if (cachedData) {
+                        csvText1 = cachedData;
+                        fundsData = parseCSVFull(csvText1);
+                        actualDataDate = localStorage.getItem('lastDataDate') || '未知日期';
+                        foundData = true;
+                        console.log('[基金温度] 成功从localStorage加载数据');
+                    } else {
+                        // 如果所有尝试都失败，抛出错误
+                        throw new Error('所有CSV文件都加载失败');
+                    }
                 }
             }
         }
         
         // 尝试加载上一个CSV文件作为上两日涨跌数据
         try {
-            // 获取当前文件在列表中的索引
-            const currentIndex = csvFiles.findIndex(file => file === currentFilename);
             let previousFile = '';
             
-            // 如果找到了当前文件，尝试加载下一个（即上一天）文件
-            if (currentIndex > -1 && currentIndex < csvFiles.length - 1) {
-                previousFile = csvFiles[currentIndex + 1];
+            // 优先从当前文件名提取日期，减一天生成上一天文件名
+            if (actualDataDate && actualDataDate !== 'data.csv' && actualDataDate !== '未知日期') {
+                const currentDate = new Date(actualDataDate);
+                currentDate.setDate(currentDate.getDate() - 1);
+                previousFile = currentDate.toISOString().split('T')[0] + '.csv';
+                console.log(`[基金温度] 从当前日期生成上一天文件名: ${previousFile}`);
             } else {
-                // 否则尝试加载硬编码的上一天文件
-                // 从当前文件名提取日期，减一天生成上一天文件名
-                if (actualDataDate && actualDataDate !== 'data.csv' && actualDataDate !== '未知日期') {
-                    const currentDate = new Date(actualDataDate);
-                    currentDate.setDate(currentDate.getDate() - 1);
-                    previousFile = currentDate.toISOString().split('T')[0] + '.csv';
+                // 否则从csvFiles列表中获取下一个文件
+                const currentIndex = csvFiles.findIndex(file => file === currentFilename);
+                if (currentIndex > -1 && currentIndex < csvFiles.length - 1) {
+                    previousFile = csvFiles[currentIndex + 1];
+                    console.log(`[基金温度] 从列表中获取上一天文件名: ${previousFile}`);
                 }
             }
             
             if (previousFile) {
                 console.log(`[基金温度] 尝试加载上一天文件: ${previousFile}`);
-                const csvRes2 = await fetch(previousFile);
+                // 添加cache: 'no-cache'选项，确保每次都获取最新的文件
+                const csvRes2 = await fetch(previousFile, { cache: 'no-cache' });
                 if (csvRes2.ok) {
                     csvText2 = await csvRes2.text();
                     oldData = parseOldCSVFull(csvText2);
                     console.log(`[基金温度] 成功加载上一天文件: ${previousFile}`);
+                    console.log(`[基金温度] 上一天数据量: ${Object.keys(oldData).length} 条`);
                 } else {
                     // 如果上一天的文件不存在，尝试使用old_data.csv作为备选
-                    const backupRes = await fetch('old_data.csv');
+                    console.log(`[基金温度] 上一天文件不存在，尝试使用old_data.csv作为备选`);
+                    const backupRes = await fetch('old_data.csv', { cache: 'no-cache' });
                     if (backupRes.ok) {
                         csvText2 = await backupRes.text();
                         oldData = parseOldCSVFull(csvText2);
@@ -489,18 +533,17 @@ async function loadAllData() {
         // 即使出错，也尝试直接从最新的CSV文件加载，不依赖缓存
         try {
             console.log('[基金温度] 加载数据出错，尝试直接加载最新的CSV文件');
-            // 列出所有已知的CSV文件，按日期倒序排列（最新的在前）
-            const csvFiles = [
-                '2026-01-14.csv',
-                '2026-01-13.csv',
-                '2026-01-12.csv',
-                '2026-01-09.csv',
-                '2026-01-08.csv',
-                '2026-01-07.csv',
-                '2026-01-06.csv',
-                '2026-01-05.csv',
-                '2025-12-31.csv'
-            ];
+            // 动态生成CSV文件名，从当前日期开始往前推30天，尝试加载最新的文件
+            const csvFiles = [];
+            const today = new Date();
+            
+            // 生成未来2天到过去30天的日期范围，确保能覆盖所有可能的最新文件
+            for (let i = 2; i > -31; i--) {
+                const date = new Date(today);
+                date.setDate(today.getDate() - i);
+                const fileName = date.toISOString().split('T')[0] + '.csv';
+                csvFiles.push(fileName);
+            }
             
             // 尝试加载最新的CSV文件
             for (const file of csvFiles) {
@@ -558,25 +601,18 @@ async function loadHistoricalData() {
         // 显示加载中
         showLoading(true);
         
-        // 只加载已知存在的CSV文件，避免大量404请求
-        const allCsvFiles = [
-            '2025-12-24.csv',
-            '2025-12-25.csv',
-            '2025-12-26.csv',
-            '2025-12-29.csv',
-            '2025-12-30.csv',
-            '2025-12-31.csv',
-            '2026-01-05.csv',
-            '2026-01-06.csv',
-            '2026-01-07.csv',
-            '2026-01-08.csv',
-            '2026-01-09.csv',
-            '2026-01-12.csv',
-            '2026-01-13.csv',
-            '2026-01-14.csv'
-        ];
+        // 动态生成CSV文件名，从2025年12月开始到当前日期，尝试加载所有可能的历史文件
+        const allCsvFiles = [];
+        const startDate = new Date('2025-12-01');
+        const endDate = new Date();
         
-        // 按日期排序
+        // 生成从startDate到endDate的所有日期
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+            const fileName = d.toISOString().split('T')[0] + '.csv';
+            allCsvFiles.push(fileName);
+        }
+        
+        // 按日期排序（虽然我们生成时已经是按日期顺序，但为了安全起见）
         allCsvFiles.sort();
         
         // 加载所有CSV文件数据
@@ -957,18 +993,31 @@ function parseCSVFull(csvText) {
     // 创建列名映射
     const colMap = {};
     headers.forEach((h, idx) => {
-        const hLower = h.toLowerCase();
+        const hLower = h.trim().toLowerCase();
+        // 处理更多的中文和英文列名，确保能匹配2026-01-15.csv的字段名
         if (h === '指数代码' || hLower === 'code') colMap.code = idx;
         else if (h === '指数名称' || hLower === 'name') colMap.name = idx;
-        else if (h === '今日涨跌幅' || hLower === 'change_pct' || h === '涨跌幅' || h === '上一日涨跌') colMap.change_pct = idx;
-        else if (h === '今年涨跌幅' || hLower === 'year_change_pct' || h === '今年涨幅' || h === '今年涨跌' || h === '今年以来涨跌幅') colMap.year_change_pct = idx;
-        else if (h === '上两日涨跌') colMap.two_day_change_pct = idx;
+        // 处理"涨跌幅"、"上一日涨跌"、"今日涨跌幅"等字段名
+        else if (h === '涨跌幅' || h === '上一日涨跌' || h === '今日涨跌幅' || hLower === 'change_pct') 
+            colMap.change_pct = idx;
+        // 处理"今年以来涨跌幅"、"今年涨跌幅"等字段名
+        else if (h === '今年以来涨跌幅' || h === '今年涨跌幅' || h === '今年涨幅' || h === '今年涨跌' || hLower === 'year_change_pct') 
+            colMap.year_change_pct = idx;
+        // 处理"上两日涨跌"字段名
+        else if (h === '上两日涨跌' || hLower === 'two_day_change_pct') 
+            colMap.two_day_change_pct = idx;
+        // 处理PE相关字段名
         else if (h === 'PE-TTM(当前值)' || hLower === 'pe') colMap.pe = idx;
-        else if (h === 'PB' || hLower === 'pb' || h === 'PB(当前值)') colMap.pb = idx;
         else if (h === 'PE-TTM(分位点%)' || hLower === 'pe_percentile') colMap.pe_percentile = idx;
+        // 处理PB相关字段名
+        else if (h === 'PB(当前值)' || h === 'PB' || hLower === 'pb') colMap.pb = idx;
         else if (h === 'PB(分位点%)' || hLower === 'pb_percentile') colMap.pb_percentile = idx;
+        // 处理关注度字段名
         else if (h === '关注度' || hLower === 'attention') colMap.attention = idx;
     });
+    
+    // 调试日志，确保关键字段被正确映射
+    console.log('[基金温度] 列名映射:', colMap);
     
     const data = {};
     
