@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>基金温度表</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/style.css?v=31">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
 </head>
 <body>
@@ -16,7 +16,7 @@
         
         <!-- 图表区域 -->
         <div class="chart-section" style="display: none; background-color: rgba(255, 255, 255, 0.95); padding: 20px; border-radius: 10px; margin: 20px 0; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15); position: sticky; top: 20px; z-index: 1000;">
-            <h2 style="color: #333; margin-bottom: 15px;">📈 历史净值曲线图</h2>
+            <h2 id="chartTypeTitle" style="color: #333; margin-bottom: 15px;">📈 历史图表</h2>
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
                 <div id="chartTitle" style="font-size: 16px; font-weight: bold; color: #333;"></div>
                 <div>
@@ -115,6 +115,7 @@
         <!-- 基金温度区域 -->
         <div class="temperature-section">
             <h2>📊 基金温度</h2>
+            <div class="tip-text">💡 提示：点击任意指数行查看历史温度曲线图</div>
             <div class="table-container">
                 <table id="fundTable">
                     <thead>
@@ -186,6 +187,6 @@
         </div>
     </div>
 
-    <script src="js/app.js"></script>
+    <script src="js/app.js?v=23"></script>
 </body>
 </html>

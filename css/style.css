@@ -7,9 +7,7 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
     min-height: 100vh;
-    color: #fff;
     padding: 20px;
 }
 
@@ -20,17 +18,15 @@ body {
 
 /* 标题样式 */
 .header {
+    border: 1px solid #000;
+    border-radius: 10px;
     text-align: center;
     padding: 30px 0;
+    margin-bottom: 20px;
 }
 
 .header h1 {
     font-size: 2.5em;
-    background: linear-gradient(90deg, #ff6b6b, #feca57, #48dbfb, #ff9ff3);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-    text-shadow: 0 0 30px rgba(255, 107, 107, 0.3);
 }
 
 /* 日期行样式 */
@@ -38,34 +34,38 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
-    background: rgba(255, 255, 255, 0.05);
-    border-radius: 10px;
-    margin-bottom: 20px;
-    backdrop-filter: blur(10px);
+    gap: 10px;
+    margin-bottom: 0;
 }
 
 .date-left, .date-center {
     font-size: 1.1em;
+    border: 1px solid #000;
+    border-radius: 10px;
+    padding: 15px 20px;
+    flex: 1;
+    text-align: center;
 }
 
 .copyright {
-    color: rgba(255, 255, 255, 0.5);
     font-size: 0.9em;
+    border: 1px solid #000;
+    border-radius: 10px;
+    padding: 15px 20px;
+    flex: 1;
+    text-align: center;
 }
 
 .brand-name {
-    color: #ff4444;
     font-weight: bold;
 }
 
 /* 温度星级说明样式 */
 .star-description {
-    background: #ffffff;
+    border: 1px solid #000;
     border-radius: 10px;
     padding: 15px;
-    margin-bottom: 20px;
-    color: #333;
+    margin-bottom: 0;
     display: flex;
     flex-direction: row;
     gap: 10px;
@@ -87,30 +87,45 @@ body {
     justify-content: center;
     align-items: center;
     padding: 8px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #000;
     border-radius: 8px;
-    background: #fafafa;
     overflow: hidden;
 }
 
 .star-desc-left {
     text-align: left;
     align-items: flex-start;
+    padding: 8px;
+    border: 1px solid #000;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .star-desc-center-left {
     text-align: center;
     align-items: center;
+    padding: 8px;
+    border: 1px solid #000;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .star-desc-center-right {
     text-align: center;
     align-items: center;
+    padding: 8px;
+    border: 1px solid #000;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .star-desc-right {
     text-align: center;
     align-items: center;
+    padding: 8px;
+    border: 1px solid #000;
+    border-radius: 8px;
+    overflow: hidden;
 }
 
 .star-desc-item {
@@ -122,12 +137,10 @@ body {
 
 .star-num {
     font-weight: bold;
-    color: #ff6b6b;
 }
 
 .disclaimer-text {
     font-size: 0.65em;
-    color: #ff4444;
     font-weight: bold;
     line-height: 1.4;
     text-align: center;
@@ -144,8 +157,7 @@ body {
 
 .fund-combo-title {
     font-weight: bold;
-    color: #333;
-    margin-bottom: 2px;
+    margin-bottom: 0;
     text-align: center;
     font-size: 1.1em;
     white-space: nowrap;
@@ -159,39 +171,55 @@ body {
 }
 
 .fund-combo-table th {
-    background: #f0f0f0;
     font-weight: bold;
+    border: 1px solid #000;
+    padding: 8px;
 }
 
-.fund-combo-table tr:nth-child(even) {
-    background: #f9f9f9;
+.fund-combo-table td {
+    border: 1px solid #000;
+    padding: 8px;
+}
+
+.fund-combo-table {
+    border-collapse: collapse;
+    width: 100%;
 }
 
 .qrcode-img {
     width: 130px;
     height: 130px;
     border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 /* 基金温度区域 */
 .temperature-section {
-    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid #000;
     border-radius: 15px;
     padding: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 
 .temperature-section h2 {
-    margin-bottom: 20px;
-    color: #48dbfb;
+    margin-bottom: 0;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #000;
+}
+
+.tip-text {
+    border: 1px solid #000;
+    border-radius: 8px;
+    padding: 10px 15px;
+    margin-bottom: 15px;
+    font-size: 0.9em;
 }
 
 /* 表格容器 */
 .table-container {
-    overflow-x: auto;
+    border: 1px solid #000;
     border-radius: 10px;
-    background: rgba(0, 0, 0, 0.2);
+    overflow-x: auto;
+    margin-top: 0;
 }
 
 /* 表格样式 */
@@ -200,25 +228,29 @@ table {
     border-collapse: collapse;
 }
 
-thead {
-    background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
-}
-
 th {
     padding: 15px 10px;
     text-align: center;
     font-weight: 600;
     white-space: nowrap;
-    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 2px solid #000;
+    border-right: 1px solid #000;
+}
+
+th:first-child {
+    border-left: 1px solid #000;
+}
+
+th:last-child {
+    border-right: none;
 }
 
 tbody tr {
     transition: all 0.3s ease;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    border-bottom: 1px solid #000;
 }
 
 tbody tr:hover {
-    background: rgba(255, 255, 255, 0.1);
     transform: scale(1.01);
 }
 
@@ -227,26 +259,62 @@ td {
     text-align: center;
     white-space: normal;
     word-break: break-all;
+    border-right: 1px solid #000;
+}
+
+td:last-child {
+    border-right: none;
 }
 
 /* 温度样式 */
 .temperature-cold {
-    color: #00d2d3;
+    background-color: #ffcccc;
+    color: #000;
     font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
 }
 
 .temperature-hot {
-    color: #ff6b6b;
+    background-color: #ccffcc;
+    color: #000;
     font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.temperature-normal {
+    background-color: #ffffcc;
+    color: #000;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
 }
 
 /* 涨跌幅样式 */
 .positive {
-    color: #2ecc71;
+    background-color: #ffcccc;
+    color: #000;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
 }
 
 .negative {
-    color: #e74c3c;
+    background-color: #ccffcc;
+    color: #000;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+/* 关注度样式 */
+.attention-high {
+    background-color: #ffcccc;
+    color: #000;
+    font-weight: bold;
+    padding: 4px 8px;
+    border-radius: 4px;
 }
 
 /* 加载覆盖层 */
@@ -256,7 +324,6 @@ td {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0, 0, 0, 0.8);
     display: flex;
     justify-content: center;
     align-items: center;
@@ -274,8 +341,8 @@ td {
 .loading-spinner {
     width: 50px;
     height: 50px;
-    border: 3px solid rgba(255, 255, 255, 0.3);
-    border-top-color: #48dbfb;
+    border: 3px solid rgba(0, 0, 0, 0.3);
+    border-top-color: #000;
     border-radius: 50%;
     animation: spin 1s linear infinite;
 }
@@ -288,7 +355,6 @@ td {
 
 .loading-overlay p {
     margin-top: 20px;
-    color: #fff;
     font-size: 1.2em;
 }
 
@@ -323,50 +389,40 @@ td {
 
 /* 指数查询区域样式 */
 .search-section {
-    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid #000;
     border-radius: 15px;
     padding: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 
 .search-section h2 {
-    margin-bottom: 20px;
-    color: #feca57;
+    margin-bottom: 0;
 }
 
 .search-box {
     display: flex;
     gap: 10px;
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 
 .search-box input {
     flex: 1;
     padding: 12px 20px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    border: 2px solid #000;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
     font-size: 1em;
     outline: none;
     transition: all 0.3s ease;
 }
 
 .search-box input:focus {
-    border-color: #48dbfb;
-    background: rgba(255, 255, 255, 0.1);
-}
-
-.search-box input::placeholder {
-    color: rgba(255, 255, 255, 0.5);
+    border-color: #000;
 }
 
 .search-box button {
     padding: 12px 30px;
     border: none;
     border-radius: 8px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: #fff;
     font-size: 1em;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -374,19 +430,17 @@ td {
 
 .search-box button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
 }
 
 .search-results {
-    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #000;
     border-radius: 10px;
     padding: 15px;
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 
 .search-results p {
-    margin-bottom: 15px;
-    color: #feca57;
+    margin-bottom: 0;
 }
 
 .results-list {
@@ -397,7 +451,6 @@ td {
 
 .result-item {
     padding: 10px 15px;
-    background: rgba(255, 255, 255, 0.1);
     border-radius: 8px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -405,20 +458,17 @@ td {
 }
 
 .result-item:hover {
-    background: rgba(72, 219, 251, 0.2);
-    border-color: #48dbfb;
+    border-color: #000;
 }
 
 .category-select {
-    background: rgba(255, 255, 255, 0.05);
     border-radius: 10px;
     padding: 15px;
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 
 .category-select p {
-    margin-bottom: 15px;
-    color: #ff9ff3;
+    margin-bottom: 0;
 }
 
 .category-buttons {
@@ -429,24 +479,21 @@ td {
 
 .category-btn {
     padding: 10px 20px;
-    border: 2px solid rgba(255, 255, 255, 0.1);
+    border: 2px solid #000;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.05);
-    color: #fff;
+    background: transparent;
     cursor: pointer;
     transition: all 0.3s ease;
     font-size: 0.9em;
 }
 
 .category-btn:hover {
-    border-color: #ff9ff3;
-    background: rgba(255, 159, 243, 0.2);
+    border-color: #000;
 }
 
 .category-btn.selected {
-    background: linear-gradient(135deg, #ff9ff3 0%, #feca57 100%);
+    background: #000;
     border-color: transparent;
-    color: #333;
 }
 
 .add-btn {
@@ -454,8 +501,6 @@ td {
     padding: 12px 30px;
     border: none;
     border-radius: 8px;
-    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
-    color: #fff;
     font-size: 1em;
     font-weight: bold;
     cursor: pointer;
@@ -464,20 +509,18 @@ td {
 
 .add-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(46, 204, 113, 0.4);
 }
 
 .query-result {
-    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid #000;
     border-radius: 10px;
     padding: 20px;
 }
 
 .query-result h3 {
-    color: #48dbfb;
-    margin-bottom: 15px;
+    margin-bottom: 0;
     padding-bottom: 10px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    border-bottom: 1px solid #000;
 }
 
 .result-info {
@@ -488,12 +531,10 @@ td {
 
 .result-item {
     padding: 15px;
-    background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
 }
 
 .result-item .label {
-    color: rgba(255, 255, 255, 0.6);
     font-size: 0.9em;
     margin-bottom: 5px;
 }
@@ -505,18 +546,6 @@ td {
 
 .result-item .value.temperature {
     font-size: 1.5em;
-    background: linear-gradient(90deg, #00d2d3, #ff6b6b);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-.result-item .value.positive {
-    color: #2ecc71;
-}
-
-.result-item .value.negative {
-    color: #e74c3c;
 }
 
 .result-item .value.stars {
@@ -534,39 +563,18 @@ td {
 
 .config-btn {
     padding: 8px 16px;
-    border: none;
+    border: 1px solid #000;
     border-radius: 5px;
     cursor: pointer;
     font-size: 14px;
     transition: all 0.3s;
 }
 
-.export-btn {
-    background-color: #28a745;
-    color: white;
-}
-
-.export-btn:hover {
-    background-color: #218838;
-}
-
-.clear-btn {
-    background-color: #dc3545;
-    color: white;
-}
-
-.clear-btn:hover {
-    background-color: #c82333;
-}
-
 .import-btn {
-    background-color: #17a2b8;
-    color: white;
     display: inline-block;
 }
 
 .import-btn:hover {
-    background-color: #138496;
 }
 
 /* 时间范围按钮样式 */
@@ -578,9 +586,8 @@ td {
 
 .time-btn {
     padding: 6px 12px;
-    border: 1px solid #ddd;
+    border: 1px solid #000;
     background-color: white;
-    color: #333;
     border-radius: 4px;
     cursor: pointer;
     font-size: 12px;
@@ -588,84 +595,76 @@ td {
 }
 
 .time-btn:hover {
-    background-color: #f0f0f0;
-    border-color: #48dbfb;
+    border-color: #000;
 }
 
 .time-btn.active {
-    background-color: #48dbfb;
-    color: white;
-    border-color: #48dbfb;
+    background-color: #fff;
+    border-color: #000;
     font-weight: bold;
+    color: #000;
 }
 
 .time-btn.active:hover {
-    background-color: #3498db;
-    border-color: #3498db;
+    background-color: #f5f5f5;
+    border-color: #000;
 }
 
 /* 导入配置说明区域 */
 .import-section {
-    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid #000;
     border-radius: 15px;
     padding: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 
 .import-section h3 {
-    margin-bottom: 15px;
-    color: #17a2b8;
+    margin-bottom: 0;
 }
 
 .import-section p {
-    margin-bottom: 15px;
-    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0;
 }
 
 .import-template {
-    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid #000;
     border-radius: 10px;
     padding: 15px;
 }
 
 .import-template h4 {
-    margin-bottom: 10px;
-    color: #feca57;
+    margin-bottom: 0;
 }
 
 .import-template pre {
-    background: rgba(0, 0, 0, 0.3);
     padding: 15px;
     border-radius: 8px;
     overflow-x: auto;
     font-size: 0.85em;
-    color: #a8e6cf;
     line-height: 1.5;
 }
 
 /* CSV数据上传区域 */
 .csv-upload-section {
-    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid #000;
     border-radius: 15px;
     padding: 20px;
-    margin-bottom: 20px;
+    margin-bottom: 0;
 }
 
 .csv-upload-section h3 {
-    margin-bottom: 10px;
-    color: #2ecc71;
+    margin-bottom: 0;
 }
 
 .csv-upload-section > p {
-    margin-bottom: 15px;
-    color: rgba(255, 255, 255, 0.8);
+    margin-bottom: 0;
 }
 
 .csv-upload-box {
     display: flex;
     align-items: center;
     gap: 15px;
-    margin-bottom: 10px;
+    margin-bottom: 0;
 }
 
 .csv-upload-row {
@@ -681,10 +680,8 @@ td {
 
 .csv-upload-btn {
     padding: 10px 20px;
-    border: none;
+    border: 1px solid #000;
     border-radius: 8px;
-    background: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
-    color: #fff;
     font-size: 14px;
     cursor: pointer;
     transition: all 0.3s ease;
@@ -693,12 +690,13 @@ td {
 
 .csv-upload-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 5px 20px rgba(46, 204, 113, 0.4);
 }
 
 .csv-file-name {
-    color: rgba(255, 255, 255, 0.6);
     font-size: 0.9em;
+    border: 1px solid #000;
+    border-radius: 8px;
+    padding: 10px 15px;
 }
 
 .csv-upload-status {

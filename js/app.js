@@ -2,13 +2,13 @@
 
 // 类别配置
 const CATEGORIES = {
-    'B': { name: '大盘', weight: 20, max_funds: 1, color: '#1a237e' },      // 深蓝
-    'C': { name: '小盘', weight: 20, max_funds: 1, color: '#4a148c' },      // 深紫
-    'D': { name: '策略', weight: 10, max_funds: 2, color: '#1a237e' },      // 深蓝
-    'E': { name: '行业', weight: 10, max_funds: 2, color: '#4a148c' },      // 深紫
-    'F': { name: '主题', weight: 10, max_funds: 2, color: '#1a237e' },      // 深蓝
-    'G': { name: '海外', weight: 10, max_funds: 1, color: '#4a148c' },      // 深紫
-    'H': { name: '债券', weight: 20, max_funds: 2, color: '#1a237e' },      // 深蓝
+    'B': { name: '大盘', weight: 20, max_funds: 1, backgroundColor: '#f5f5f5' },
+    'C': { name: '小盘', weight: 20, max_funds: 1, backgroundColor: '#cce5ff' },
+    'D': { name: '策略', weight: 10, max_funds: 2, backgroundColor: '#f5f5f5' },
+    'E': { name: '行业', weight: 10, max_funds: 2, backgroundColor: '#cce5ff' },
+    'F': { name: '主题', weight: 10, max_funds: 2, backgroundColor: '#f5f5f5' },
+    'G': { name: '海外', weight: 10, max_funds: 1, backgroundColor: '#cce5ff' },
+    'H': { name: '债券', weight: 20, max_funds: 2, backgroundColor: '#f5f5f5' },
 };
 
 // 指数类别映射（完整配置）
@@ -180,7 +180,7 @@ let currentChartState = {
     code: null,   // 指数代码或基金代码
     name: null,   // 指数名称或基金名称
     fundType: null, // 场内或场外，仅对净值图表有效
-    days: 365      // 当前显示天数，默认365天
+    days: 20      // 当前显示天数，默认20天
 };
 
 // 初始化缓存
@@ -197,10 +197,231 @@ function updateDate(dateStr) {
 }
 
 // 显示温度图表
-function showTemperatureChart(code, name) {
-    console.log('显示温度图表:', code, name);
-    // 这里可以添加显示温度图表的逻辑
-    // 由于没有具体的图表实现，暂时只打印日志
+async function showTemperatureChart(code, name, days = 20) {
+    console.log('显示温度图表:', code, name, '天数:', days);
+    
+    try {
+        showLoading(true);
+        
+        // 扫描所有CSV文件
+        const today = new Date();
+        const existingCsvFiles = [];
+        
+        for (let i = 0; i < 60; i++) {
+            const date = new Date(today);
+            date.setDate(today.getDate() - i);
+            const fileName = date.toISOString().split('T')[0] + '.csv';
+            
+            try {
+                const response = await fetch(fileName, { cache: 'no-cache' });
+                if (response.ok) {
+                    existingCsvFiles.push(fileName);
+                }
+            } catch (error) {
+                // 文件不存在，忽略
+            }
+        }
+        
+        // 按日期升序排序（最早的在前）
+        existingCsvFiles.sort((a, b) => a.localeCompare(b));
+        
+        if (existingCsvFiles.length === 0) {
+            alert('未找到任何CSV文件');
+            showLoading(false);
+            return;
+        }
+        
+        // 根据传入的天数参数筛选CSV文件（几个CSV文件就是几天）
+        const startIndex = Math.max(0, existingCsvFiles.length - days);
+        const filteredCsvFiles = existingCsvFiles.slice(startIndex);
+        
+        // 加载筛选后的CSV文件并计算温度
+        const temperatureData = [];
+        const dates = [];
+        const category = CATEGORY_MAP[code] || 'B';
+        
+        for (const fileName of filteredCsvFiles) {
+            try {
+                const response = await fetch(fileName, { cache: 'no-cache' });
+                const csvText = await response.text();
+                const data = parseCSVFull(csvText);
+                
+                if (data[code]) {
+                    const indexData = data[code];
+                    let temperature;
+                    
+                    if (category === 'E') {
+                        temperature = indexData.pb_percentile * 100;
+                    } else {
+                        temperature = (indexData.pe_percentile + indexData.pb_percentile) / 2 * 100;
+                    }
+                    
+                    const dateStr = fileName.replace('.csv', '');
+                    dates.push(dateStr);
+                    temperatureData.push(temperature.toFixed(2));
+                }
+            } catch (error) {
+                console.error(`加载文件 ${fileName} 失败:`, error);
+            }
+        }
+        
+        if (dates.length === 0) {
+            alert('未找到该指数的历史数据');
+            showLoading(false);
+            return;
+        }
+        
+        // 找出最高和最低温度及其索引
+        let maxTemp = -Infinity;
+        let minTemp = Infinity;
+        let maxIndex = -1;
+        let minIndex = -1;
+        
+        for (let i = 0; i < temperatureData.length; i++) {
+            const temp = parseFloat(temperatureData[i]);
+            if (temp > maxTemp) {
+                maxTemp = temp;
+                maxIndex = i;
+            }
+            if (temp < minTemp) {
+                minTemp = temp;
+                minIndex = i;
+            }
+        }
+        
+        // 更新图表状态
+        currentChartState = {
+            type: 'temperature',
+            code: code,
+            name: name,
+            days: filteredCsvFiles.length
+        };
+        
+        // 显示图表
+        const chartSection = document.querySelector('.chart-section');
+        const chartTitle = document.getElementById('chartTitle');
+        const chartTypeTitle = document.getElementById('chartTypeTitle');
+        const chartContainer = document.getElementById('temperatureChart');
+        
+        chartSection.style.display = 'block';
+        chartTitle.textContent = `${name} (${code}) - 最近${filteredCsvFiles.length}天`;
+        chartTypeTitle.textContent = '📈 基金温度历史趋势图';
+        
+        // 初始化ECharts
+        if (window.myChart) {
+            window.myChart.dispose();
+        }
+        
+        window.myChart = echarts.init(chartContainer);
+        
+        const option = {
+            title: {
+                text: '基金温度历史趋势',
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'axis',
+                formatter: function(params) {
+                    return `${params[0].name}<br/>温度: ${params[0].value}°C`;
+                }
+            },
+            xAxis: {
+                type: 'category',
+                data: dates,
+                axisLabel: {
+                    rotate: 45,
+                    interval: Math.ceil(dates.length / 10)
+                }
+            },
+            yAxis: {
+                type: 'value',
+                name: '温度(°C)',
+                axisLabel: {
+                    formatter: '{value}°C'
+                }
+            },
+            series: [{
+                name: '温度',
+                type: 'line',
+                data: temperatureData,
+                smooth: true,
+                markPoint: {
+                    data: [
+                        {
+                            name: '最高',
+                            coord: [dates[maxIndex], maxTemp],
+                            itemStyle: {
+                                color: '#ff0000'
+                            },
+                            label: {
+                                show: true,
+                                position: 'top',
+                                offset: [0, -10],
+                                formatter: maxTemp + '°C',
+                                color: '#ff0000',
+                                fontWeight: 'bold'
+                            }
+                        },
+                        {
+                            name: '最低',
+                            coord: [dates[minIndex], minTemp],
+                            itemStyle: {
+                                color: '#00ff00'
+                            },
+                            label: {
+                                show: true,
+                                position: 'top',
+                                offset: [0, -10],
+                                formatter: minTemp + '°C',
+                                color: '#00ff00',
+                                fontWeight: 'bold'
+                            }
+                        }
+                    ]
+                },
+                itemStyle: {
+                    color: '#1a237e'
+                },
+                lineStyle: {
+                    color: '#1a237e',
+                    width: 2
+                },
+                areaStyle: {
+                    color: {
+                        type: 'linear',
+                        x: 0,
+                        y: 0,
+                        x2: 0,
+                        y2: 1,
+                        colorStops: [{
+                            offset: 0,
+                            color: 'rgba(26, 35, 126, 0.1)'
+                        }, {
+                            offset: 1,
+                            color: 'rgba(26, 35, 126, 0.3)'
+                        }]
+                    }
+                }
+            }],
+            grid: {
+                left: '3%',
+                right: '4%',
+                bottom: '3%',
+                containLabel: true
+            }
+        };
+        
+        window.myChart.setOption(option);
+        
+        // 更新时间范围按钮
+        updateTimeButtons();
+        
+        showLoading(false);
+    } catch (error) {
+        console.error('显示温度图表失败:', error);
+        alert('显示温度图表失败: ' + error.message);
+        showLoading(false);
+    }
 }
 
 // 显示基金净值图表
@@ -314,161 +535,82 @@ async function loadAllData() {
         let actualDataDate = '';
         let foundData = false;
         let currentFilename = '';
-        let csvFiles = [];
         
-        // 动态生成CSV文件名，从当前日期开始往前推30天，尝试加载最新的文件
+        // 通过尝试加载来获取所有存在的CSV文件，然后按日期排序
+        console.log('[基金温度] 开始扫描本地CSV文件');
+        const existingCsvFiles = [];
+        
+        // 尝试加载过去60天的CSV文件，找到所有存在的文件
         const today = new Date();
-        
-        // 生成未来2天到过去30天的日期范围，确保能覆盖所有可能的最新文件
-        // 注意：i=2 是未来2天，i=1 是未来1天，i=0 是今天，i=-1 是昨天，以此类推
-        for (let i = 2; i > -31; i--) {
+        for (let i = 0; i < 60; i++) {
             const date = new Date(today);
             date.setDate(today.getDate() - i);
             const fileName = date.toISOString().split('T')[0] + '.csv';
-            csvFiles.push(fileName);
+            
+            try {
+                const response = await fetch(fileName, { cache: 'no-cache' });
+                if (response.ok) {
+                    existingCsvFiles.push(fileName);
+                    console.log(`[基金温度] 发现文件: ${fileName}`);
+                }
+            } catch (error) {
+                // 文件不存在，忽略
+            }
         }
         
-        // 手动添加今天的日期作为最后一道保障，确保今天的文件一定会被尝试
-        const todayFileName = today.toISOString().split('T')[0] + '.csv';
-        if (!csvFiles.includes(todayFileName)) {
-            csvFiles.unshift(todayFileName);
+        // 按日期降序排序（最新的在前）
+        existingCsvFiles.sort((a, b) => b.localeCompare(a));
+        console.log('[基金温度] 找到的CSV文件列表（按日期降序）:', existingCsvFiles);
+        
+        if (existingCsvFiles.length === 0) {
+            throw new Error('未找到任何CSV文件');
         }
         
-        // 优先加载2026-01-15.csv文件，确保显示最新数据
+        // 最大的文件名就是最新的文件（上一日涨跌数据）
+        const latestFile = existingCsvFiles[0];
+        console.log(`[基金温度] 最新文件（上一日涨跌）: ${latestFile}`);
+        
+        // 第二大的文件名就是上两日涨跌数据
+        const secondLatestFile = existingCsvFiles.length > 1 ? existingCsvFiles[1] : null;
+        console.log(`[基金温度] 次新文件（上两日涨跌）: ${secondLatestFile}`);
+        
+        // 加载最新的CSV文件
+        console.log(`[基金温度] 尝试加载最新文件: ${latestFile}`);
+        const csvRes = await fetch(latestFile, { cache: 'no-cache' });
+        if (csvRes.ok) {
+            csvText1 = await csvRes.text();
+            console.log(`[基金温度] 最新文件内容长度: ${csvText1.length} 字符`);
+            fundsData = parseCSVFull(csvText1);
+            console.log(`[基金温度] 最新文件解析后的数据量: ${Object.keys(fundsData).length} 条`);
+            actualDataDate = latestFile.replace('.csv', '');
+            currentFilename = latestFile;
+            foundData = true;
+            console.log(`[基金温度] 成功加载最新文件: ${latestFile}`);
+        } else {
+            throw new Error(`无法加载最新文件: ${latestFile}`);
+        }
+        
+        // 尝试加载上两日涨跌数据（第二大的文件）
         try {
-            console.log('[基金温度] 特殊处理：优先尝试加载2026-01-15.csv文件');
-            const csvRes = await fetch('2026-01-15.csv', { cache: 'no-cache' });
-            if (csvRes.ok) {
-                csvText1 = await csvRes.text();
-                console.log('[基金温度] 2026-01-15.csv文件内容长度:', csvText1.length, '字符');
-                fundsData = parseCSVFull(csvText1);
-                console.log('[基金温度] 2026-01-15.csv解析后的数据量:', Object.keys(fundsData).length, '条');
-                actualDataDate = '2026-01-15';
-                currentFilename = '2026-01-15.csv';
-                foundData = true;
-                console.log('[基金温度] 成功加载2026-01-15.csv');
-            }
-        } catch (error) {
-            console.error('[基金温度] 加载2026-01-15.csv失败:', error);
-        }
-        
-        // 如果特殊处理失败，继续尝试其他文件
-        if (!foundData) {
-            // 调试日志，确保2026-01-15.csv在列表中
-            console.log('[基金温度] 生成的CSV文件列表:', csvFiles);
-            console.log('[基金温度] 今天的文件名:', todayFileName);
-            
-            console.log('[基金温度] 准备加载CSV文件列表:', csvFiles);
-            
-            // 优先从本地加载最新的CSV文件
-            for (const file of csvFiles) {
-                try {
-                    console.log(`[基金温度] 尝试加载文件: ${file}`);
-                    // 添加cache: 'no-cache'选项，确保每次都获取最新的文件
-                    const csvRes = await fetch(file, { cache: 'no-cache' });
-                    if (csvRes.ok) {
-                        csvText1 = await csvRes.text();
-                        console.log(`[基金温度] 文件内容长度: ${csvText1.length} 字符`);
-                        fundsData = parseCSVFull(csvText1);
-                        console.log(`[基金温度] 解析后的数据量: ${Object.keys(fundsData).length} 条`);
-                        actualDataDate = file.replace('.csv', '');
-                        currentFilename = file;
-                        foundData = true;
-                        console.log(`[基金温度] 成功加载: ${file}`);
-                        break;
-                    } else {
-                        console.log(`[基金温度] 文件不存在或无法访问: ${file}, 状态码: ${csvRes.status}`);
-                        // 特别检查2026-01-15.csv的状态
-                        if (file === '2026-01-15.csv') {
-                            console.error('[基金温度] 2026-01-15.csv加载失败，状态码:', csvRes.status);
-                        }
-                    }
-                } catch (error) {
-                    // 忽略单个文件加载错误，继续尝试下一个
-                    console.log(`[基金温度] 加载文件失败: ${file}, 错误: ${error.message}`);
-                    // 特别检查2026-01-15.csv的错误
-                    if (file === '2026-01-15.csv') {
-                        console.error('[基金温度] 2026-01-15.csv加载异常:', error);
-                    }
-                }
-            }
-            
-            // 如果本地没有找到任何文件，尝试使用data.csv作为最后的备选
-            if (!foundData) {
-                console.log('[基金温度] 本地文件加载失败，尝试加载data.csv作为备选');
-                const backupRes = await fetch('data.csv');
-                if (backupRes.ok) {
-                    csvText1 = await backupRes.text();
-                    fundsData = parseCSVFull(csvText1);
-                    actualDataDate = 'data.csv';
-                    foundData = true;
-                    console.log('[基金温度] 成功加载data.csv');
-                } else {
-                    // 最后尝试从localStorage加载
-                    console.log('[基金温度] data.csv加载失败，尝试从localStorage加载');
-                    const cachedData = localStorage.getItem('csvData');
-                    if (cachedData) {
-                        csvText1 = cachedData;
-                        fundsData = parseCSVFull(csvText1);
-                        actualDataDate = localStorage.getItem('lastDataDate') || '未知日期';
-                        foundData = true;
-                        console.log('[基金温度] 成功从localStorage加载数据');
-                    } else {
-                        // 如果所有尝试都失败，抛出错误
-                        throw new Error('所有CSV文件都加载失败');
-                    }
-                }
-            }
-        }
-        
-        // 尝试加载上一个CSV文件作为上两日涨跌数据
-        try {
-            let previousFile = '';
-            
-            // 优先从当前文件名提取日期，减一天生成上一天文件名
-            if (actualDataDate && actualDataDate !== 'data.csv' && actualDataDate !== '未知日期') {
-                const currentDate = new Date(actualDataDate);
-                currentDate.setDate(currentDate.getDate() - 1);
-                previousFile = currentDate.toISOString().split('T')[0] + '.csv';
-                console.log(`[基金温度] 从当前日期生成上一天文件名: ${previousFile}`);
-            } else {
-                // 否则从csvFiles列表中获取下一个文件
-                const currentIndex = csvFiles.findIndex(file => file === currentFilename);
-                if (currentIndex > -1 && currentIndex < csvFiles.length - 1) {
-                    previousFile = csvFiles[currentIndex + 1];
-                    console.log(`[基金温度] 从列表中获取上一天文件名: ${previousFile}`);
-                }
-            }
-            
-            if (previousFile) {
-                console.log(`[基金温度] 尝试加载上一天文件: ${previousFile}`);
-                // 添加cache: 'no-cache'选项，确保每次都获取最新的文件
-                const csvRes2 = await fetch(previousFile, { cache: 'no-cache' });
+            if (secondLatestFile) {
+                console.log(`[基金温度] 尝试加载上两日涨跌文件: ${secondLatestFile}`);
+                const csvRes2 = await fetch(secondLatestFile, { cache: 'no-cache' });
                 if (csvRes2.ok) {
                     csvText2 = await csvRes2.text();
                     oldData = parseOldCSVFull(csvText2);
-                    console.log(`[基金温度] 成功加载上一天文件: ${previousFile}`);
-                    console.log(`[基金温度] 上一天数据量: ${Object.keys(oldData).length} 条`);
+                    console.log(`[基金温度] 成功加载上两日涨跌文件: ${secondLatestFile}`);
+                    console.log(`[基金温度] 上两日涨跌数据量: ${Object.keys(oldData).length} 条`);
                 } else {
-                    // 如果上一天的文件不存在，尝试使用old_data.csv作为备选
-                    console.log(`[基金温度] 上一天文件不存在，尝试使用old_data.csv作为备选`);
-                    const backupRes = await fetch('old_data.csv', { cache: 'no-cache' });
-                    if (backupRes.ok) {
-                        csvText2 = await backupRes.text();
-                        oldData = parseOldCSVFull(csvText2);
-                        console.log(`[基金温度] 使用备选文件old_data.csv`);
-                    } else {
-                        oldData = {};
-                        console.log(`[基金温度] 未找到上一天数据`);
-                    }
+                    oldData = {};
+                    console.log(`[基金温度] 未找到上两日涨跌数据`);
                 }
             } else {
                 oldData = {};
-                console.log(`[基金温度] 未找到上一天数据`);
+                console.log(`[基金温度] 没有第二大的CSV文件，上两日涨跌数据为空`);
             }
         } catch (error) {
             oldData = {};
-            console.log(`[基金温度] 加载上一天数据失败: ${error.message}`);
+            console.log(`[基金温度] 加载上两日涨跌数据失败: ${error.message}`);
         }
         
         // 合并数据：将oldData的上两日涨跌幅合并到fundsData
@@ -479,7 +621,7 @@ async function loadAllData() {
         }
         
         // 合并自定义配置到codeConfig（如果有的话）
-        let customConfigStr = localStorage.getItem('customCodeConfig');
+        const customConfigStr = localStorage.getItem('customCodeConfig');
         if (customConfigStr) {
             try {
                 const customConfig = JSON.parse(customConfigStr);
@@ -530,49 +672,13 @@ async function loadAllData() {
     } catch (error) {
         console.error('[基金温度] 加载数据失败:', error.message);
         
-        // 即使出错，也尝试直接从最新的CSV文件加载，不依赖缓存
-        try {
-            console.log('[基金温度] 加载数据出错，尝试直接加载最新的CSV文件');
-            // 动态生成CSV文件名，从当前日期开始往前推30天，尝试加载最新的文件
-            const csvFiles = [];
-            const today = new Date();
-            
-            // 生成未来2天到过去30天的日期范围，确保能覆盖所有可能的最新文件
-            for (let i = 2; i > -31; i--) {
-                const date = new Date(today);
-                date.setDate(today.getDate() - i);
-                const fileName = date.toISOString().split('T')[0] + '.csv';
-                csvFiles.push(fileName);
-            }
-            
-            // 尝试加载最新的CSV文件
-            for (const file of csvFiles) {
-                try {
-                    console.log(`[基金温度] 尝试直接加载文件: ${file}`);
-                    const csvRes = await fetch(file);
-                    if (csvRes.ok) {
-                        const csvText = await csvRes.text();
-                        fundsData = parseCSVFull(csvText);
-                        const actualDataDate = file.replace('.csv', '');
-                        
-                        // 显示数据
-                        renderFundTable();
-                        updateDate(actualDataDate);
-                        calculateAndShowStarRating();
-                        showLoading(false);
-                        return;
-                    }
-                } catch (fileError) {
-                    // 忽略单个文件加载错误，继续尝试下一个
-                    console.log(`[基金温度] 直接加载文件失败: ${file}, 错误: ${fileError.message}`);
-                }
-            }
-            
-            // 如果所有文件都加载失败，再尝试从localStorage加载
-            console.log('[基金温度] 所有直接加载尝试失败，尝试从localStorage加载');
-            const cacheKeyV4 = 'fundTempData_v4';
-            if (localStorage.getItem(cacheKeyV4)) {
-                const tempData = JSON.parse(localStorage.getItem(cacheKeyV4));
+        // 尝试从localStorage加载缓存数据
+        console.log('[基金温度] 尝试从localStorage加载缓存数据');
+        const cacheKeyV4 = 'fundTempData_v4';
+        const cachedDataStr = localStorage.getItem(cacheKeyV4);
+        if (cachedDataStr) {
+            try {
+                const tempData = JSON.parse(cachedDataStr);
                 fundsData = tempData.fundsData;
                 oldData = tempData.oldData;
                 codeConfig = tempData.codeConfig;
@@ -583,10 +689,9 @@ async function loadAllData() {
                 calculateAndShowStarRating();
                 showLoading(false);
                 return;
+            } catch (e) {
+                console.error('[基金温度] 解析缓存数据失败:', e.message);
             }
-        } catch (e) {
-            // 所有尝试都失败，忽略
-            console.error('[基金温度] 所有加载尝试都失败:', e.message);
         }
         
         // 如果没有缓存数据，显示默认的数据日期
@@ -677,6 +782,39 @@ function showLoading(show) {
     const overlay = document.getElementById('loadingOverlay');
     if (overlay) {
         overlay.style.display = show ? 'flex' : 'none';
+    }
+}
+
+// 关闭图表
+function closeChart() {
+    const chartSection = document.querySelector('.chart-section');
+    if (chartSection) {
+        chartSection.style.display = 'none';
+    }
+    if (window.myChart) {
+        window.myChart.dispose();
+        window.myChart = null;
+    }
+}
+
+// 切换图表显示天数
+function changeChartDays(days) {
+    if (currentChartState.type === 'temperature') {
+        showTemperatureChart(currentChartState.code, currentChartState.name, days);
+    } else if (currentChartState.type === 'nav') {
+        showFundNavChart(currentChartState.code, currentChartState.fundType);
+    }
+}
+
+// 更新时间范围按钮状态
+function updateTimeButtons() {
+    const buttons = document.querySelectorAll('.time-btn');
+    buttons.forEach(btn => {
+        btn.classList.remove('active');
+    });
+    const activeBtn = document.querySelector(`.time-btn[onclick="changeChartDays(${currentChartState.days})"]`);
+    if (activeBtn) {
+        activeBtn.classList.add('active');
     }
 }
 
@@ -810,13 +948,13 @@ function renderFundTable() {
         const categoryInfo = CATEGORIES[category];
         
         // 温度颜色：高温绿色，正常黄色，低温红色
-        let tempColor;
+        let tempClass;
         if (temperature >= 50) {
-            tempColor = '#51cf66'; // 高温绿色
+            tempClass = 'temperature-hot'; // 高温绿色
         } else if (temperature >= 30) {
-            tempColor = '#fcc419'; // 正常黄色
+            tempClass = 'temperature-normal'; // 正常黄色
         } else {
-            tempColor = '#ff6b6b'; // 低温红色
+            tempClass = 'temperature-cold'; // 低温红色
         }
         
         // 格式化涨跌幅
@@ -824,14 +962,18 @@ function renderFundTable() {
         const changeHtml = formatChange(data.change_pct);
         const twoDayChangeHtml = data.two_day_change_pct !== undefined 
             ? formatChange(data.two_day_change_pct) 
-            : '<span style="color: rgba(255,255,255,0.5);">--</span>';
+            : '<span>--</span>';
         
         // 关注度
         const attentionHtml = formatAttention(data.attention);
         
         // 创建表格行
         const row = document.createElement('tr');
-        row.style.backgroundColor = categoryInfo.color;
+        
+        // 设置类别背景色
+        if (categoryInfo.backgroundColor) {
+            row.style.backgroundColor = categoryInfo.backgroundColor;
+        }
         
         // 添加点击事件
         row.onclick = () => showTemperatureChart(code, data.name);
@@ -844,22 +986,21 @@ function renderFundTable() {
         // 为精选数据添加特殊标记 - 使用边框和背景色区分
         if (isTopSelection) {
             row.style.cssText = `
-                background: linear-gradient(90deg, rgba(255,215,0,0.15) 0%, ${categoryInfo.color} 50%, rgba(255,215,0,0.15) 100%);
                 border: 3px solid #FFD700;
-                box-shadow: 0 0 10px rgba(255,215,0,0.5);
+                background-color: #cce5ff;
             `;
             row.innerHTML = `
                 <td>${categoryInfo.name} ⭐</td>
                 <td>${code}</td>
                 <td>${data.name}</td>
                 <td class="temperature-cell" style="cursor: pointer;">
-                    <span class="temp-value" style="color: ${tempColor}; font-weight: bold;">${temperature.toFixed(2)}°C</span>
+                    <span class="temp-value ${tempClass}">${temperature.toFixed(2)}°C</span>
                 </td>
                 <td>${yearChangeHtml}</td>
                 <td>${changeHtml}</td>
                 <td>${twoDayChangeHtml}</td>
-                <td style="${场内代码 !== '-' ? 'cursor: pointer; color: #48dbfb; text-decoration: underline;' : ''}">${场内代码}</td>
-                <td style="${场外代码 !== '-' ? 'cursor: pointer; color: #48dbfb; text-decoration: underline;' : ''}">${场外代码}</td>
+                <td style="${场内代码 !== '-' ? 'cursor: pointer; text-decoration: underline;' : ''}">${场内代码}</td>
+                <td style="${场外代码 !== '-' ? 'cursor: pointer; text-decoration: underline;' : ''}">${场外代码}</td>
                 <td>${attentionHtml}</td>
             `;
         } else {
@@ -868,13 +1009,13 @@ function renderFundTable() {
                 <td>${code}</td>
                 <td>${data.name}</td>
                 <td class="temperature-cell" style="cursor: pointer;">
-                    <span class="temp-value" style="color: ${tempColor}; font-weight: bold;">${temperature.toFixed(2)}°C</span>
+                    <span class="temp-value ${tempClass}">${temperature.toFixed(2)}°C</span>
                 </td>
                 <td>${yearChangeHtml}</td>
                 <td>${changeHtml}</td>
                 <td>${twoDayChangeHtml}</td>
-                <td style="${场内代码 !== '-' ? 'cursor: pointer; color: #48dbfb; text-decoration: underline;' : ''}">${场内代码}</td>
-                <td style="${场外代码 !== '-' ? 'cursor: pointer; color: #48dbfb; text-decoration: underline;' : ''}">${场外代码}</td>
+                <td style="${场内代码 !== '-' ? 'cursor: pointer; text-decoration: underline;' : ''}">${场内代码}</td>
+                <td style="${场外代码 !== '-' ? 'cursor: pointer; text-decoration: underline;' : ''}">${场外代码}</td>
                 <td>${attentionHtml}</td>
             `;
         }
@@ -912,8 +1053,8 @@ function renderFundTable() {
     if (displayedCount > 0) {
         const infoRow = document.createElement('tr');
         infoRow.innerHTML = `
-            <td colspan="10" style="text-align: center; background-color: rgba(0,0,0,0.2); padding: 10px;">
-                <span style="color: rgba(255,255,255,0.8);">💡 提示：点击任意指数行查看历史温度曲线图</span>
+            <td colspan="10" style="text-align: center; padding: 10px;">
+                <span>💡 提示：点击任意指数行查看历史温度曲线图</span>
             </td>
         `;
         tbody.appendChild(infoRow);
@@ -928,11 +1069,11 @@ function renderFundTable() {
 // 格式化涨跌幅
 function formatChange(value) {
     if (value > 0) {
-        return `<span style="color: #ff6b6b;">+${value.toFixed(2)}%</span>`;
+        return `<span class="positive">+${value.toFixed(2)}%</span>`;
     } else if (value < 0) {
-        return `<span style="color: #51cf66;">${value.toFixed(2)}%</span>`;
+        return `<span class="negative">${value.toFixed(2)}%</span>`;
     }
-    return '<span style="color: rgba(255,255,255,0.5);">0.00%</span>';
+    return '<span>0.00%</span>';
 }
 
 // 格式化关注度
@@ -940,7 +1081,7 @@ function formatAttention(value) {
     if (!value) return '--';
     const numValue = parseFloat(value.replace(/[^0-9.]/g, ''));
     if (!isNaN(numValue) && numValue > 10000) {
-        return `<span style="color: #ff6b6b;">${value}</span>`;
+        return `<span class="attention-high">${value}</span>`;
     }
     return value;
 }
@@ -1169,18 +1310,18 @@ function handleCSVUpload(input) {
             loadAllData();
             
             // 显示上传成功信息
-            document.getElementById('csvUploadStatus').innerHTML = `<span style="color: green;">✅ 数据上传成功，已更新到 ${dataDate}</span>`;
+            document.getElementById('csvUploadStatus').innerHTML = `<span>✅ 数据上传成功，已更新到 ${dataDate}</span>`;
             
             // 清空文件输入
             input.value = '';
         } catch (error) {
             console.error('[基金温度] CSV文件解析失败:', error.message);
-            document.getElementById('csvUploadStatus').innerHTML = `<span style="color: red;">❌ 数据上传失败: ${error.message}</span>`;
+            document.getElementById('csvUploadStatus').innerHTML = `<span>❌ 数据上传失败: ${error.message}</span>`;
         }
     };
     
     reader.onerror = function() {
-        document.getElementById('csvUploadStatus').innerHTML = '<span style="color: red;">❌ 读取文件失败</span>';
+        document.getElementById('csvUploadStatus').innerHTML = '<span>❌ 读取文件失败</span>';
     };
     
     reader.readAsText(file);
