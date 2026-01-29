@@ -82,9 +82,119 @@
             </div>
         </div>
 
-        <!-- 指数查询区域 -->
-        <div class="search-section">
-            <h2>🔍 指数添加</h2>
+        <!-- 股市晴雨表、中证全指EPV、四大魔盒和指数添加 -->
+        <div class="stock-weather-section">
+            <h2 class="stock-weather-title">一、股市晴雨表</h2>
+            <div class="stock-weather-table-container">
+                <table class="stock-weather-table">
+                    <thead>
+                        <tr>
+                            <th>指数</th>
+                            <th>PE温度&lt;50%</th>
+                            <th>PB温度&lt;20%</th>
+                            <th>建议可否入市</th>
+                            <th>建议</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>大盘</td>
+                            <td>42.16%</td>
+                            <td>30.38%</td>
+                            <td class="not-recommended" rowspan="2">不宜入市</td>
+                            <td rowspan="2">烟蒂股</td>
+                        </tr>
+                        <tr>
+                            <td>小盘</td>
+                            <td>49.36%</td>
+                            <td>29.60%</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <h2 class="stock-weather-title">二、中证全指EPV、四大魔盒</h2>
+            <div class="stock-weather-table-container">
+                <div style="display: flex; gap: 20px; width: 100%; height: 400px; align-items: stretch;">
+                <!-- 中证全指EPV部分 -->
+                <div style="flex: 1; border-right: 2px solid #ddd; padding-right: 10px; display: flex; flex-direction: column;">
+                    <h3 style="text-align: center; margin-bottom: 10px;">2.1、中证全指EPV</h3>
+                    <table class="stock-weather-table epv-table">
+                        <thead>
+                            <tr>
+                                <th>PE_TTM</th>
+                                <th>10年期国债收益</th>
+                                <th>EPV</th>
+                                <th>建议</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td style="vertical-align: middle;">8.53%</td>
+                                <td style="vertical-align: middle;">1.839%</td>
+                                <td style="vertical-align: middle;">4.641014877</td>
+                                <td style="vertical-align: middle;">黄金坑</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 10px; font-weight: bold; color: #ff0000; text-align: center; flex-grow: 1; display: flex; align-items: flex-start; justify-content: center;">
+                        黄金坑&gt;2.5≥白银坑≥2≥青铜坑≥1.5≥废坑
+                    </div>
+                </div>
+                
+                <!-- 四大魔盒部分 -->
+                <div style="flex: 1; padding-left: 10px; display: flex; flex-direction: column;">
+                    <h3 style="text-align: center; margin-bottom: 10px;">2.2、四大魔盒</h3>
+                    <table class="stock-weather-table magic-box-table">
+                        <thead>
+                            <tr>
+                                <th>魔盒</th>
+                                <th>当前值</th>
+                                <th>开启标准</th>
+                                <th>是否开启</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>中证800PE</td>
+                                <td>94.28%</td>
+                                <td>&gt;70%</td>
+                                <td rowspan="2" style="vertical-align: middle;">关闭</td>
+                            </tr>
+                            <tr>
+                                <td>中证800PB</td>
+                                <td>67.42%</td>
+                                <td>&gt;70%</td>
+                            </tr>
+                            <tr>
+                                <td>股市吸引力</td>
+                                <td>4.05%</td>
+                                <td>&lt;1.5%</td>
+                                <td>关闭</td>
+                            </tr>
+                            <tr>
+                                <td>巴菲特指数</td>
+                                <td>96.23%</td>
+                                <td>&gt;100%</td>
+                                <td>关闭</td>
+                            </tr>
+                            <tr>
+                                <td>七日换手率</td>
+                                <td>28.62%</td>
+                                <td>&gt;10%</td>
+                                <td>开启</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div style="margin-top: 10px; font-weight: bold; color: #ff0000; text-align: center; flex-grow: 1; display: flex; align-items: flex-start; justify-content: center;">
+                        四大魔盒全开时，是股灾的开始！！！
+                    </div>
+                </div>
+            </div>
+            </div>
+            
+            <!-- 指数添加 -->
+            <h2 class="stock-weather-title">三、指数添加</h2>
             <div class="search-box">
                 <input type="text" id="searchKeyword" placeholder="请输入指数代码或名称（如：000016、上证50、银行）">
                 <button onclick="searchIndex()">搜索</button>
@@ -110,41 +220,40 @@
                 </div>
                 <button class="add-btn" onclick="addToFundTable()">添加到基金温度</button>
             </div>
-        </div>
-
-        <!-- 基金温度区域 -->
-        <div class="temperature-section">
-            <h2>📊 基金温度</h2>
-            <div class="tip-text">💡 提示：点击任意指数行查看历史温度曲线图</div>
-            <div class="table-container">
-                <table id="fundTable">
-                    <thead>
-                        <tr>
-                            <th>类型</th>
-                            <th>指数代码</th>
-                            <th>指数名称</th>
-                            <th>基金温度</th>
-                            <th>今年涨跌</th>
-                            <th>上一日涨跌</th>
-                            <th>上两日涨跌</th>
-                            <th>场内代码</th>
-                            <th>场外代码</th>
-                            <th>关注度</th>
-                        </tr>
-                    </thead>
-                    <tbody id="fundTableBody">
-                    </tbody>
-                </table>
-            </div>
             
-            <!-- 配置管理按钮 -->
-            <div class="config-buttons">
-                <button onclick="exportCustomConfig()" class="config-btn export-btn">📥 导出配置</button>
-                <button onclick="clearCustomConfig()" class="config-btn clear-btn">🗑️ 清除配置</button>
-                <label class="config-btn import-btn">
-                    📤 导入配置
-                    <input type="file" id="configFileInput" accept=".json" style="display: none;" onchange="importCustomConfig(this)">
-                </label>
+            <!-- 基金温度 -->
+            <h2 class="stock-weather-title">四、基金温度</h2>
+            <div class="temperature-section">
+                <div class="table-container">
+                    <table id="fundTable">
+                        <thead>
+                            <tr>
+                                <th>类型</th>
+                                <th>指数代码</th>
+                                <th>指数名称</th>
+                                <th>基金温度</th>
+                                <th>今年涨跌</th>
+                                <th>上一日涨跌</th>
+                                <th>上两日涨跌</th>
+                                <th>场内代码</th>
+                                <th>场外代码</th>
+                                <th>关注度</th>
+                            </tr>
+                        </thead>
+                        <tbody id="fundTableBody">
+                        </tbody>
+                    </table>
+                </div>
+                
+                <!-- 配置管理按钮 -->
+                <div class="config-buttons">
+                    <button onclick="exportCustomConfig()" class="config-btn export-btn">📥 导出配置</button>
+                    <button onclick="clearCustomConfig()" class="config-btn clear-btn">🗑️ 清除配置</button>
+                    <label class="config-btn import-btn">
+                        📤 导入配置
+                        <input type="file" id="configFileInput" accept=".json" style="display: none;" onchange="importCustomConfig(this)">
+                    </label>
+                </div>
             </div>
         </div>
 

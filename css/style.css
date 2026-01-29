@@ -194,8 +194,6 @@ body {
 
 /* 基金温度区域 */
 .temperature-section {
-    border: 1px solid #000;
-    border-radius: 15px;
     padding: 20px;
     margin-bottom: 0;
 }
@@ -233,24 +231,20 @@ th {
     text-align: center;
     font-weight: 600;
     white-space: nowrap;
+    border: 1px solid #000;
     border-bottom: 2px solid #000;
-    border-right: 1px solid #000;
-}
-
-th:first-child {
-    border-left: 1px solid #000;
 }
 
 th:last-child {
-    border-right: none;
+    border-right: 1px solid #000;
 }
 
-tbody tr {
+ tbody tr {
     transition: all 0.3s ease;
-    border-bottom: 1px solid #000;
+    border: 1px solid #000;
 }
 
-tbody tr:hover {
+ tbody tr:hover {
     transform: scale(1.01);
 }
 
@@ -259,11 +253,13 @@ td {
     text-align: center;
     white-space: normal;
     word-break: break-all;
-    border-right: 1px solid #000;
+    border: 1px solid #000;
 }
 
-td:last-child {
-    border-right: none;
+/* 确保表格容器显示完整边框 */
+table {
+    border: 1px solid #000;
+    border-collapse: collapse;
 }
 
 /* 温度样式 */
@@ -402,7 +398,10 @@ td:last-child {
 .search-box {
     display: flex;
     gap: 10px;
-    margin-bottom: 0;
+    margin-bottom: 20px;
+    padding: 15px;
+    border: 1px solid #000;
+    border-radius: 10px;
 }
 
 .search-box input {
@@ -575,6 +574,125 @@ td:last-child {
 }
 
 .import-btn:hover {
+}
+
+/* 股市晴雨表样式 */
+.stock-weather-section {
+    border: 1px solid #000;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.stock-weather-title {
+    text-align: center;
+    color: #000;
+    margin-bottom: 20px;
+    font-size: 1.8em;
+}
+
+.stock-weather-table-container {
+    border: 1px solid #000;
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+.stock-weather-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.stock-weather-table th {
+    padding: 15px;
+    text-align: center;
+    font-weight: bold;
+    border: 1px solid #000;
+}
+
+.stock-weather-table th:nth-child(2),
+.stock-weather-table th:nth-child(3),
+.stock-weather-table th:nth-child(4),
+.stock-weather-table th:nth-child(5) {
+    background-color: #ffcc00;
+}
+
+.stock-weather-table td {
+    padding: 12px 15px;
+    text-align: center;
+    border: 1px solid #000;
+}
+
+.stock-weather-table td:nth-child(2),
+.stock-weather-table td:nth-child(3) {
+    background-color: transparent;
+}
+
+.stock-weather-table .not-recommended {
+    color: #ff0000;
+    font-weight: bold;
+}
+
+/* 中证全指EPV、四大魔盒表格样式 */
+.epv-magic-box-table {
+    width: 100%;
+    table-layout: fixed;
+}
+
+.epv-magic-box-table th {
+    background-color: transparent !important;
+}
+
+.epv-magic-box-table td {
+    background-color: transparent !important;
+}
+
+/* 中证全指EPV和四大魔盒各占50%宽度 */
+.epv-magic-box-table th:nth-child(-n+4),
+.epv-magic-box-table td:nth-child(-n+4) {
+    width: 12.5%; /* 4列共50% */
+}
+
+.epv-magic-box-table th:nth-child(n+5),
+.epv-magic-box-table td:nth-child(n+5) {
+    width: 12.5%; /* 4列共50% */
+}
+
+/* 新表格样式 - 确保两个表格高度相同 */
+.epv-table, .magic-box-table {
+    width: 100%;
+    table-layout: fixed;
+    height: 300px; /* 设置固定高度，确保两个表格一样高 */
+}
+
+.epv-table th,
+.magic-box-table th {
+    background-color: #f0f0f0;
+    text-align: center;
+    padding: 10px;
+    border: 1px solid #ddd;
+}
+
+.epv-table td,
+.magic-box-table td {
+    padding: 10px;
+    border: 1px solid #ddd;
+    text-align: center;
+    vertical-align: middle;
+}
+
+/* 调整容器样式，确保两个表格垂直对齐 */
+.epv-table-container,
+.magic-box-table-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* 确保两个部分的高度一致 */
+.epv-table + div,
+.magic-box-table + div {
+    margin-top: 10px;
+    text-align: center;
 }
 
 /* 时间范围按钮样式 */

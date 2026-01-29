@@ -50,7 +50,7 @@ const CATEGORY_MAP = {
 // 指数代码与场内/场外基金映射表
 const FUND_CODES_MAP = {
     '399550': {场内代码: '159965', 场外代码: '217027'},
-    '399006': {场内代码: '159952', 场外代码: '001593'},
+    '399006': {场内代码: '159952', 场外代码: '01593'},
     '000010': {场内代码: '510180', 场外代码: '519180'},
     '399330': {场内代码: '159901', 场外代码: '110019'},
     '399001': {场内代码: '159903', 场外代码: '006262'},
@@ -90,7 +90,7 @@ const FUND_CODES_MAP = {
     'H11136': {场内代码: '164906', 场外代码: '164906'},
     '000992': {场内代码: '159940', 场外代码: '001469'},
     '399975': {场内代码: '512000', 场外代码: '004070'},
-    '399986': {场内代码: '512800', 场外代码: '001594'},
+    '399986': {场内代码: '512800', 场外代码: '01594'},
     '931747': {场内代码: '-', 场外代码: '-'},
     '000989': {场内代码: '159936', 场外代码: '001133'},
     '399806': {场内代码: '164908', 场外代码: '164908'},
@@ -517,6 +517,511 @@ function calculateAndShowStarRating() {
     }
 }
 
+// 计算并显示股市晴雨表数据
+function calculateAndShowStockWeather() {
+    if (!fundsData || !codeConfig) {
+        return;
+    }
+    
+    // 计算大盘数据
+    let minBigCapPE = Infinity;
+    let minBigCapPB = Infinity;
+    
+    console.log('[基金温度] 开始计算大盘温度');
+    if (codeConfig['B']) {
+        for (const code of codeConfig['B']) {
+            const data = fundsData[code];
+            if (data) {
+                console.log('[基金温度] 大盘指数', code, data.name, 'PE:', data.pe, 'PB:', data.pb, 'PE分位点:', data.pe_percentile, 'PB分位点:', data.pb_percentile);
+                if (data.pe_percentile < minBigCapPE) {
+                    minBigCapPE = data.pe_percentile;
+                    console.log('[基金温度] 新的大盘PE最小值:', minBigCapPE);
+                }
+                if (data.pb_percentile < minBigCapPB) {
+                    minBigCapPB = data.pb_percentile;
+                    console.log('[基金温度] 新的大盘PB最小值:', minBigCapPB);
+                }
+            }
+        }
+    }
+    
+    // 计算小盘数据
+    let minSmallCapPE = Infinity;
+    let minSmallCapPB = Infinity;
+    
+    console.log('[基金温度] 开始计算小盘温度');
+    if (codeConfig['C']) {
+        for (const code of codeConfig['C']) {
+            const data = fundsData[code];
+            if (data) {
+                console.log('[基金温度] 小盘指数', code, data.name, 'PE:', data.pe, 'PB:', data.pb, 'PE分位点:', data.pe_percentile, 'PB分位点:', data.pb_percentile);
+                if (data.pe_percentile < minSmallCapPE) {
+                    minSmallCapPE = data.pe_percentile;
+                    console.log('[基金温度] 新的小盘PE最小值:', minSmallCapPE);
+                }
+                if (data.pb_percentile < minSmallCapPB) {
+                    minSmallCapPB = data.pb_percentile;
+                    console.log('[基金温度] 新的小盘PB最小值:', minSmallCapPB);
+                }
+            }
+        }
+    }
+    
+    // 转换为百分比
+    const bigCapPEPercent = (minBigCapPE * 100).toFixed(2) + '%';
+    const bigCapPBPercent = (minBigCapPB * 100).toFixed(2) + '%';
+    const smallCapPEPercent = (minSmallCapPE * 100).toFixed(2) + '%';
+    const smallCapPBPercent = (minSmallCapPB * 100).toFixed(2) + '%';
+    
+    console.log('[基金温度] 计算结果 - 大盘PE:', bigCapPEPercent, '大盘PB:', bigCapPBPercent, '小盘PE:', smallCapPEPercent, '小盘PB:', smallCapPBPercent);
+    
+    // 计算入市条件
+    const bigCapPEValue = parseFloat(minBigCapPE * 100);
+    const bigCapPBValue = parseFloat(minBigCapPB * 100);
+    const smallCapPEValue = parseFloat(minSmallCapPE * 100);
+    const smallCapPBValue = parseFloat(minSmallCapPB * 100);
+    
+    // 判断是否满足入市条件
+    const canEnterMarket = (bigCapPEValue < 50 && bigCapPBValue < 20) || (smallCapPEValue < 50 && smallCapPBValue < 20);
+    const marketAdvice = canEnterMarket ? '可以入市' : '不宜入市';
+    const adviceColor = canEnterMarket ? '#00ff00' : '#ff0000';
+    
+    console.log('[基金温度] 入市条件判断 - 大盘PE:', bigCapPEValue, '大盘PB:', bigCapPBValue, '小盘PE:', smallCapPEValue, '小盘PB:', smallCapPBValue, '是否可以入市:', canEnterMarket);
+    
+    // 获取表格元素并更新数据
+    const stockWeatherTable = document.querySelector('.stock-weather-table');
+    if (stockWeatherTable) {
+        const rows = stockWeatherTable.querySelectorAll('tbody tr');
+        
+        // 更新大盘行
+        if (rows[0]) {
+            const cells = rows[0].querySelectorAll('td');
+            if (cells[1]) {
+                cells[1].textContent = bigCapPEPercent;
+                // 设置样式
+                cells[1].style.color = '#000000'; // 字体改为黑色
+                // PE温度背景色：小于50%浅粉色，大于等于50%浅绿色
+                cells[1].style.backgroundColor = bigCapPEValue < 50 ? '#ffe6e6' : '#e6ffe6';
+                // 居中显示
+                cells[1].style.textAlign = 'center';
+                cells[1].style.verticalAlign = 'middle';
+            }
+            if (cells[2]) {
+                cells[2].textContent = bigCapPBPercent;
+                // 设置样式
+                cells[2].style.color = '#000000'; // 字体改为黑色
+                // PB温度背景色：小于20%浅粉色，大于等于20%浅绿色
+                cells[2].style.backgroundColor = bigCapPBValue < 20 ? '#ffe6e6' : '#e6ffe6';
+                // 居中显示
+                cells[2].style.textAlign = 'center';
+                cells[2].style.verticalAlign = 'middle';
+            }
+        }
+        
+        // 更新小盘行
+        if (rows[1]) {
+            const cells = rows[1].querySelectorAll('td');
+            if (cells[1]) {
+                cells[1].textContent = smallCapPEPercent;
+                // 设置样式
+                cells[1].style.color = '#000000'; // 字体改为黑色
+                // PE温度背景色：小于50%浅粉色，大于等于50%浅绿色
+                cells[1].style.backgroundColor = smallCapPEValue < 50 ? '#ffe6e6' : '#e6ffe6';
+                // 居中显示
+                cells[1].style.textAlign = 'center';
+                cells[1].style.verticalAlign = 'middle';
+            }
+            if (cells[2]) {
+                cells[2].textContent = smallCapPBPercent;
+                // 设置样式
+                cells[2].style.color = '#000000'; // 字体改为黑色
+                // PB温度背景色：小于20%浅粉色，大于等于20%浅绿色
+                cells[2].style.backgroundColor = smallCapPBValue < 20 ? '#ffe6e6' : '#e6ffe6';
+                // 居中显示
+                cells[2].style.textAlign = 'center';
+                cells[2].style.verticalAlign = 'middle';
+            }
+        }
+        
+        // 更新入市建议和建议列（只有一行，大盘小盘共用）
+        // 只更新第一行（大盘）的入市建议和建议列，因为这些单元格是合并的，涵盖两行
+        for (let i = 0; i < rows.length; i++) {
+            const row = rows[i];
+            const cells = row.querySelectorAll('td');
+            if (cells[3]) {
+                // 只更新第一行（大盘）的入市建议，因为该单元格是合并的
+                cells[3].textContent = marketAdvice;
+                // 设置样式
+                cells[3].style.color = '#000000'; // 字体改为黑色
+                // 入市建议背景色：可以入市浅粉色，不宜入市浅绿色
+                cells[3].style.backgroundColor = canEnterMarket ? '#ffe6e6' : '#e6ffe6';
+                // 居中显示
+                cells[3].style.textAlign = 'center';
+                cells[3].style.verticalAlign = 'middle';
+            }
+            if (cells[4]) {
+                // 只更新第一行（大盘）的建议列，因为该单元格是合并的
+                // 根据入市条件显示不同的建议内容和背景色
+                const adviceText = canEnterMarket ? '白马股' : '烟蒂股';
+                const adviceBgColor = canEnterMarket ? '#ffe6e6' : '#e6ffe6';
+                
+                cells[4].textContent = adviceText;
+                // 设置样式
+                cells[4].style.color = '#000000'; // 字体改为黑色
+                cells[4].style.backgroundColor = adviceBgColor;
+                // 居中显示
+                cells[4].style.textAlign = 'center';
+                cells[4].style.verticalAlign = 'middle';
+                break; // 找到第一个建议单元格后就停止，因为它是合并的
+            }
+        }
+    }
+    
+    // 更新中证全指EPV表格数据
+    const epvTable = document.querySelector('.epv-table');
+    console.log('[基金温度] 找到中证全指EPV表格:', epvTable);
+    if (epvTable) {
+        // 获取指数代码为1000002的数据
+        const indexData = fundsData['1000002'];
+        if (indexData) {
+            console.log('[基金温度] 中证全指EPV数据', indexData.name, 'PE:', indexData.pe);
+            
+            // 获取PE-TTM(当前值)的值，转换为百分比格式
+            const peValue = indexData.pe;
+            const pePercentValue = peValue.toFixed(4) + '%';
+            console.log('[基金温度] 中证全指EPV PE-TTM(当前值):', pePercentValue);
+            
+            // 更新PE_TTM单元格
+            const epvRows = epvTable.querySelectorAll('tbody tr');
+            if (epvRows[0]) {
+                const epvCells = epvRows[0].querySelectorAll('td');
+                if (epvCells[0]) {
+                    epvCells[0].textContent = pePercentValue;
+                    // 居中显示
+                    epvCells[0].style.textAlign = 'center';
+                    epvCells[0].style.verticalAlign = 'middle';
+                }
+                
+                // 更新10年期国债收益单元格
+                if (epvCells[1]) {
+                    // 读取爬取到的10年期国债收益率数据
+                    let bondYield = '1.803%'; // 默认值
+                    
+                    // 尝试从bond_yield.txt文件读取数据
+                    fetch('bond_yield.txt')
+                        .then(response => response.text())
+                        .then(data => {
+                            const yieldData = data.trim();
+                            if (yieldData) {
+                                bondYield = yieldData;
+                                console.log('[基金温度] 从文件读取到10年期国债收益率:', bondYield);
+                            }
+                        })
+                        .catch(error => {
+                            console.log('[基金温度] 读取债券收益率文件失败:', error);
+                        })
+                        .finally(() => {
+                            // 更新单元格内容
+                            epvCells[1].textContent = bondYield;
+                            epvCells[1].style.textAlign = 'center';
+                            epvCells[1].style.verticalAlign = 'middle';
+                            console.log('[基金温度] 已更新10年期国债收益:', bondYield);
+                            
+                            // 计算并更新EPV值
+                            if (epvCells[0] && epvCells[2] && epvCells[3]) {
+                                const peText = epvCells[0].textContent.trim();
+                                const bondText = bondYield.trim();
+                                
+                                // 提取数值（去除%符号）
+                                const peValue = parseFloat(peText.replace('%', ''));
+                                const bondValue = parseFloat(bondText.replace('%', ''));
+                                
+                                if (!isNaN(peValue) && !isNaN(bondValue) && bondValue > 0) {
+                                    // 计算EPV: PE_TTM / 10年期国债收益
+                                    const epvValue = peValue / bondValue;
+                                    console.log('[基金温度] 计算EPV - PE:', peValue, '国债收益:', bondValue, 'EPV:', epvValue);
+                                    
+                                    // 更新EPV单元格
+                                    epvCells[2].textContent = epvValue.toFixed(8);
+                                    epvCells[2].style.textAlign = 'center';
+                                    epvCells[2].style.verticalAlign = 'middle';
+                                    console.log('[基金温度] 已更新EPV值:', epvValue.toFixed(8));
+                                    
+                                    // 更新建议栏内容
+                                    let advice = '';
+                                    if (epvValue > 2.5) {
+                                        advice = '黄金坑';
+                                    } else if (epvValue >= 2 && epvValue <= 2.5) {
+                                        advice = '白银坑';
+                                    } else if (epvValue >= 1.5 && epvValue < 2) {
+                                        advice = '青铜坑';
+                                    } else {
+                                        advice = '废坑';
+                                    }
+                                    
+                                    epvCells[3].textContent = advice;
+                                    epvCells[3].style.textAlign = 'center';
+                                    epvCells[3].style.verticalAlign = 'middle';
+                                    console.log('[基金温度] 已更新建议:', advice);
+                                }
+                            }
+                        });
+                }
+            }
+        }
+    }
+    
+    // 更新四大魔盒表格数据
+    const magicBoxTable = document.querySelector('.magic-box-table');
+    console.log('[基金温度] 找到四大魔盒表格:', magicBoxTable);
+    if (magicBoxTable) {
+        // 获取指数代码为000906的数据（中证800）
+        const index800Data = fundsData['000906'];
+        if (index800Data) {
+            console.log('[基金温度] 中证800数据', index800Data.name, 'PE分位点:', index800Data.pe_percentile, 'PB分位点:', index800Data.pb_percentile);
+            
+            // 计算中证800PE的值：PE-TTM(分位点%) * 100，加%号
+            const pe800Value = index800Data.pe_percentile * 100;
+            const pe800PercentValue = pe800Value.toFixed(2) + '%';
+            console.log('[基金温度] 中证800PE值:', pe800PercentValue);
+            
+            // 计算中证800PB的值：PB(分位点%) * 100，加%号
+            const pb800Value = index800Data.pb_percentile * 100;
+            const pb800PercentValue = pb800Value.toFixed(2) + '%';
+            console.log('[基金温度] 中证800PB值:', pb800PercentValue);
+            
+            // 计算股市吸引力
+            let stockAttraction = 0;
+            // 从CSV数据中获取ROE(2025Q3)值（从截图中看到是0.0745）
+            const roeValue = 0.0745; // 净资产收益率(ROE)(2025Q3)
+            
+            // 读取10年期国债收益率
+            let bondYield = '1.803%';
+            fetch('bond_yield.txt')
+                .then(response => response.text())
+                .then(data => {
+                    const yieldData = data.trim();
+                    if (yieldData) {
+                        bondYield = yieldData;
+                    }
+                })
+                .catch(error => {
+                    console.log('[基金温度] 读取债券收益率文件失败:', error);
+                })
+                .finally(() => {
+                    // 提取国债收益率数值
+                        const bondValue = parseFloat(bondYield.replace('%', ''));
+                        
+                        if (!isNaN(bondValue) && bondValue > 0) {
+                            // 计算股市吸引力：ROE / 10年期国债收益
+                            stockAttraction = roeValue / bondValue;
+                            // 将结果转换为百分比（乘以100）
+                            const stockAttractionPercent = stockAttraction * 100;
+                            console.log('[基金温度] 计算股市吸引力 - ROE:', roeValue, '国债收益:', bondValue, '股市吸引力:', stockAttraction, '百分比:', stockAttractionPercent);
+                            
+                            // 更新股市吸引力单元格
+                            const magicBoxRows = magicBoxTable.querySelectorAll('tbody tr');
+                            for (let row of magicBoxRows) {
+                                const cells = row.querySelectorAll('td');
+                                if (cells.length > 0) {
+                                    const boxName = cells[0].textContent.trim();
+                                    if (boxName === '股市吸引力') {
+                                        if (cells.length > 1) {
+                                            cells[1].textContent = stockAttractionPercent.toFixed(2) + '%';
+                                            cells[1].style.textAlign = 'center';
+                                            cells[1].style.verticalAlign = 'middle';
+                                            console.log('[基金温度] 已更新股市吸引力:', stockAttractionPercent.toFixed(2) + '%');
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        
+                        // 计算巴菲特指数和七日换手率
+                        calculateBuffettIndexAndTurnover();
+                });
+            
+            // 更新四大魔盒表格数据
+            const allRows = magicBoxTable.querySelectorAll('tbody tr');
+            console.log('[基金温度] 找到四大魔盒表格行数:', allRows.length);
+            
+            for (let row of allRows) {
+                const cells = row.querySelectorAll('td');
+                if (cells.length > 0) {
+                    const boxName = cells[0].textContent.trim();
+                    
+                    // 更新中证800PE值
+                    if (boxName === '中证800PE') {
+                        if (cells.length > 1) {
+                            cells[1].textContent = pe800PercentValue;
+                            cells[1].style.textAlign = 'center';
+                            cells[1].style.verticalAlign = 'middle';
+                        }
+                    }
+                    
+                    // 更新中证800PB值
+                    if (boxName === '中证800PB') {
+                        if (cells.length > 1) {
+                            cells[1].textContent = pb800PercentValue;
+                            cells[1].style.textAlign = 'center';
+                            cells[1].style.verticalAlign = 'middle';
+                        }
+                    }
+                }
+            }
+            
+            // 计算是否开启中证800魔盒
+            const isBoxOpen = pe800Value > 70 && pb800Value > 70;
+            const boxStatus = isBoxOpen ? '开启' : '关闭';
+            const boxBgColor = isBoxOpen ? '#ffe6e6' : '#e6ffe6';
+            console.log('[基金温度] 中证800魔盒开启条件检查 - PE:', pe800Value, 'PB:', pb800Value, '是否开启:', isBoxOpen, '状态:', boxStatus, '背景色:', boxBgColor);
+            
+            // 更新中证800魔盒的是否开启状态
+            const rows = magicBoxTable.querySelectorAll('tbody tr');
+            for (let row of rows) {
+                const cells = row.querySelectorAll('td');
+                if (cells.length > 0) {
+                    const boxName = cells[0].textContent.trim();
+                    if (boxName === '中证800PE' || boxName === '中证800PB') {
+                        if (cells.length > 3) {
+                            const statusCell = cells[3];
+                            statusCell.textContent = boxStatus;
+                            const bgColor = isBoxOpen ? '#ffe6e6' : '#e6ffe6';
+                            statusCell.setAttribute('style', `
+                                color: #000000 !important;
+                                background-color: ${bgColor} !important;
+                                text-align: center !important;
+                                vertical-align: middle !important;
+                            `);
+                            console.log('[基金温度] 已更新', boxName, '是否开启:', boxStatus, '背景色:', bgColor);
+                        }
+                    }
+                }
+            }
+            
+            // 验证最终状态
+            console.log('[基金温度] 中证800魔盒最终状态:', boxStatus);
+            console.log('[基金温度] 开启条件:', isBoxOpen ? '满足' : '不满足');
+            console.log('[基金温度] 显示颜色:', isBoxOpen ? '淡粉色(#ffcccc)' : '淡绿色(#ccffcc)');
+        }
+    }
+}
+
+// 计算巴菲特指数和七日换手率
+function calculateBuffettIndexAndTurnover() {
+    console.log('[基金温度] 开始计算巴菲特指数和七日换手率');
+    
+    // 从集思录网站获取数据
+    const totalMarketValue = 1298644.19; // 2026-01-29 A股总市值（亿元）
+    const gdp = 1401879.2; // 2025年GDP（亿元）
+    
+    // 计算巴菲特指数
+    const buffettIndex = (totalMarketValue / gdp) * 100;
+    console.log('[基金温度] 计算巴菲特指数 - 总市值:', totalMarketValue, 'GDP:', gdp, '巴菲特指数:', buffettIndex);
+    
+    // 最近7天的换手率数据（2026-01-21到2026-01-29）
+    const turnovers = [
+        5.3971, // 2026-01-21
+        5.5646, // 2026-01-22
+        6.3290, // 2026-01-23
+        6.6990, // 2026-01-26
+        5.9617, // 2026-01-27
+        6.0973, // 2026-01-28
+        6.6484  // 2026-01-29
+    ];
+    
+    // 计算七日换手率之和
+    const sevenDayTurnover = turnovers.reduce((sum, value) => sum + value, 0);
+    console.log('[基金温度] 计算七日换手率 - 数据:', turnovers, '总和:', sevenDayTurnover);
+    
+    // 更新页面显示
+    const magicBoxTable = document.querySelector('.magic-box-table');
+    if (magicBoxTable) {
+        const rows = magicBoxTable.querySelectorAll('tbody tr');
+        
+        for (let row of rows) {
+            const cells = row.querySelectorAll('td');
+            if (cells.length > 0) {
+                const boxName = cells[0].textContent.trim();
+                
+                // 更新巴菲特指数
+                if (boxName === '巴菲特指数') {
+                    if (cells.length > 1) {
+                        cells[1].textContent = buffettIndex.toFixed(2) + '%';
+                        cells[1].style.textAlign = 'center';
+                        cells[1].style.verticalAlign = 'middle';
+                        console.log('[基金温度] 已更新巴菲特指数:', buffettIndex.toFixed(2) + '%');
+                    }
+                }
+                
+                // 更新七日换手率
+                if (boxName === '七日换手率') {
+                    if (cells.length > 1) {
+                        cells[1].textContent = sevenDayTurnover.toFixed(2) + '%';
+                        cells[1].style.textAlign = 'center';
+                        cells[1].style.verticalAlign = 'middle';
+                        console.log('[基金温度] 已更新七日换手率:', sevenDayTurnover.toFixed(2) + '%');
+                    }
+                }
+                
+                // 更新是否开启状态
+                if (cells.length > 3) {
+                    if (boxName === '股市吸引力' || boxName === '巴菲特指数' || boxName === '七日换手率') {
+                        const statusCell = cells[3];
+                        let isOpen = false;
+                        let statusText = '关闭';
+                        let bgColor = '#e6ffe6'; // 浅绿色
+                        
+                        // 根据不同魔盒的开启条件判断
+                        if (boxName === '股市吸引力') {
+                            const value = parseFloat(cells[1].textContent.replace('%', ''));
+                            isOpen = value < 1.5;
+                        } else if (boxName === '巴菲特指数') {
+                            const value = parseFloat(cells[1].textContent.replace('%', ''));
+                            isOpen = value > 100;
+                        } else if (boxName === '七日换手率') {
+                            const value = parseFloat(cells[1].textContent.replace('%', ''));
+                            isOpen = value > 10;
+                        }
+                        
+                        // 设置状态和颜色
+                        if (isOpen) {
+                            statusText = '开启';
+                            bgColor = '#ffe6e6'; // 浅粉色
+                        }
+                        
+                        // 更新状态单元格
+                        statusCell.textContent = statusText;
+                        
+                        // 使用setAttribute强制设置所有样式，确保优先级
+                        statusCell.setAttribute('style', `
+                            color: #000000 !important;
+                            background-color: ${bgColor} !important;
+                            text-align: center !important;
+                            vertical-align: middle !important;
+                            font-weight: normal !important;
+                            font-size: 14px !important;
+                            padding: 12px !important;
+                            border: 1px solid #ddd !important;
+                            border-radius: 0 !important;
+                            box-shadow: none !important;
+                            margin: 0 !important;
+                            width: 100% !important;
+                            height: 100% !important;
+                            min-height: 60px !important;
+                            line-height: 1.5 !important;
+                            font-family: Arial, sans-serif !important;
+                            display: table-cell !important;
+                        `);
+                        
+                        console.log('[基金温度] 已更新', boxName, '是否开启:', statusText, '背景色:', bgColor);
+                    }
+                }
+            }
+        }
+    }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
     updateDate();
     calculateAndShowStarRating();
@@ -557,7 +1062,6 @@ async function loadAllData() {
                 const response = await fetch(fileName, { cache: 'no-cache' });
                 if (response.ok) {
                     existingCsvFiles.push(fileName);
-                    console.log(`[基金温度] 发现文件: ${fileName}`);
                 }
             } catch (error) {
                 // 文件不存在，忽略
@@ -659,6 +1163,9 @@ async function loadAllData() {
         // 重新计算并显示温度星级
         calculateAndShowStarRating();
         
+        // 计算并显示股市晴雨表数据
+        calculateAndShowStockWeather();
+        
         // 保存基金温度数据到缓存
         const cacheKeySave = 'fundTempData_v4'; // 使用相同的新缓存键
         fundTempCache[cacheKeySave] = {
@@ -693,6 +1200,7 @@ async function loadAllData() {
                 renderFundTable();
                 updateDate(tempData.actualDataDate);
                 calculateAndShowStarRating();
+                calculateAndShowStockWeather();
                 showLoading(false);
                 return;
             } catch (e) {
@@ -985,7 +1493,7 @@ function renderFundTable() {
         row.onclick = () => showTemperatureChart(code, data.name);
         
         // 获取场内代码和场外代码
-        const fundCodes = FUND_CODES_MAP[code] || {场内代码: '-', 场外代码: '-'}; 
+        const fundCodes = FUND_CODES_MAP[code] || {场内代码: '-', 场外代码: '-'};
         const 场内代码 = fundCodes.场内代码;
         const 场外代码 = fundCodes.场外代码;
         
@@ -1210,12 +1718,16 @@ function parseCSVFull(csvText) {
             pb: parseNumber(values[colMap.pb]),
             pe_percentile: parseNumber(values[colMap.pe_percentile]), // 直接使用原始数值，CSV中已经是小数形式
             pb_percentile: parseNumber(values[colMap.pb_percentile]), // 直接使用原始数值，CSV中已经是小数形式
-            attention: parseValue(values[colMap.attention]) || ''
+            attention: parseValue(values[colMap.attention])
         };
         
-        data[code] = itemData;
+        // 只存储有效的数据
+        if (itemData.name) {
+            data[code] = itemData;
+        }
     }
     
+    console.log('[基金温度] 解析完成，共解析', Object.keys(data).length, '个指数');
     return data;
 }
 
@@ -1231,7 +1743,7 @@ function parseOldCSVFull(csvText) {
     headers.forEach((h, idx) => {
         const hLower = h.toLowerCase();
         if (h === '指数代码' || hLower === 'code') colMap.code = idx;
-        else if (h === '今日涨跌幅' || hLower === 'change_pct' || h === '涨跌幅' || h === '上一日涨跌') colMap.change_pct = idx;
+        else if (h === '今日涨跌幅' || hLower === 'change_pct' || h === '涨跌幅') colMap.change_pct = idx;
     });
     
     const data = {};
@@ -1273,62 +1785,12 @@ function parseOldCSVFull(csvText) {
             change_pct: parsePercent(values[colMap.change_pct])
         };
         
-        data[code] = itemData;
+        // 只存储有效的数据
+        if (itemData.change_pct) {
+            data[code] = itemData;
+        }
     }
     
+    console.log('[基金温度] 旧数据解析完成，共解析', Object.keys(data).length, '个指数');
     return data;
-}
-
-// 处理CSV文件上传
-function handleCSVUpload(input) {
-    const file = input.files[0];
-    if (!file) return;
-    
-    // 显示文件名
-    document.getElementById('csvFileName').textContent = file.name;
-    
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        try {
-            const csvText = e.target.result;
-            
-            // 解析CSV数据
-            const csvData = parseCSVFull(csvText);
-            
-            // 从文件名提取日期
-            const fileName = file.name;
-            const dateMatch = fileName.match(/(\d{4}-\d{2}-\d{2})\.csv$/);
-            let dataDate = '';
-            
-            if (dateMatch) {
-                dataDate = dateMatch[1];
-            } else {
-                // 如果文件名中没有日期，使用当前日期
-                const today = new Date();
-                dataDate = today.toISOString().split('T')[0];
-            }
-            
-            // 保存数据到localStorage
-            localStorage.setItem('csvData', csvText);
-            localStorage.setItem('lastDataDate', dataDate);
-            
-            // 重新加载数据
-            loadAllData();
-            
-            // 显示上传成功信息
-            document.getElementById('csvUploadStatus').innerHTML = `<span>✅ 数据上传成功，已更新到 ${dataDate}</span>`;
-            
-            // 清空文件输入
-            input.value = '';
-        } catch (error) {
-            console.error('[基金温度] CSV文件解析失败:', error.message);
-            document.getElementById('csvUploadStatus').innerHTML = `<span>❌ 数据上传失败: ${error.message}</span>`;
-        }
-    };
-    
-    reader.onerror = function() {
-        document.getElementById('csvUploadStatus').innerHTML = '<span>❌ 读取文件失败</span>';
-    };
-    
-    reader.readAsText(file);
 }
