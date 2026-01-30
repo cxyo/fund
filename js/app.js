@@ -704,68 +704,43 @@ function calculateAndShowStockWeather() {
                 
                 // 更新10年期国债收益单元格
                 if (epvCells[1]) {
-                    // 读取爬取到的10年期国债收益率数据
+                    // 优先从localStorage加载金融数据
                     let bondYield = '1.803%'; // 默认值
                     
-                    // 尝试从bond_yield.txt文件读取数据
-                    fetch('bond_yield.txt')
-                        .then(response => response.text())
-                        .then(data => {
-                            const yieldData = data.trim();
-                            if (yieldData) {
-                                bondYield = yieldData;
-                                console.log('[基金温度] 从文件读取到10年期国债收益率:', bondYield);
+                    try {
+                        const financialDataStr = localStorage.getItem('financialData');
+                        if (financialDataStr) {
+                            const financialData = JSON.parse(financialDataStr);
+                            if (financialData.bond_yield && financialData.bond_yield.yield) {
+                                bondYield = financialData.bond_yield.yield;
+                                console.log('[基金温度] 从缓存读取到10年期国债收益率:', bondYield);
                             }
-                        })
-                        .catch(error => {
-                            console.log('[基金温度] 读取债券收益率文件失败:', error);
-                        })
-                        .finally(() => {
-                            // 更新单元格内容
-                            epvCells[1].textContent = bondYield;
-                            epvCells[1].style.textAlign = 'center';
-                            epvCells[1].style.verticalAlign = 'middle';
-                            console.log('[基金温度] 已更新10年期国债收益:', bondYield);
-                            
-                            // 计算并更新EPV值
-                            if (epvCells[0] && epvCells[2] && epvCells[3]) {
-                                const peText = epvCells[0].textContent.trim();
-                                const bondText = bondYield.trim();
-                                
-                                // 提取数值（去除%符号）
-                                const peValue = parseFloat(peText.replace('%', ''));
-                                const bondValue = parseFloat(bondText.replace('%', ''));
-                                
-                                if (!isNaN(peValue) && !isNaN(bondValue) && bondValue > 0) {
-                                    // 计算EPV: PE_TTM / 10年期国债收益
-                                    const epvValue = peValue / bondValue;
-                                    console.log('[基金温度] 计算EPV - PE:', peValue, '国债收益:', bondValue, 'EPV:', epvValue);
-                                    
-                                    // 更新EPV单元格
-                                    epvCells[2].textContent = epvValue.toFixed(8);
-                                    epvCells[2].style.textAlign = 'center';
-                                    epvCells[2].style.verticalAlign = 'middle';
-                                    console.log('[基金温度] 已更新EPV值:', epvValue.toFixed(8));
-                                    
-                                    // 更新建议栏内容
-                                    let advice = '';
-                                    if (epvValue > 2.5) {
-                                        advice = '黄金坑';
-                                    } else if (epvValue >= 2 && epvValue <= 2.5) {
-                                        advice = '白银坑';
-                                    } else if (epvValue >= 1.5 && epvValue < 2) {
-                                        advice = '青铜坑';
-                                    } else {
-                                        advice = '废坑';
-                                    }
-                                    
-                                    epvCells[3].textContent = advice;
-                                    epvCells[3].style.textAlign = 'center';
-                                    epvCells[3].style.verticalAlign = 'middle';
-                                    console.log('[基金温度] 已更新建议:', advice);
+                        }
+                    } catch (error) {
+                        console.error('[基金温度] 读取缓存金融数据失败:', error.message);
+                    }
+                    
+                    // 如果缓存中没有，从文件读取
+                    if (bondYield === '1.803%') {
+                        fetch('bond_yield.txt')
+                            .then(response => response.text())
+                            .then(data => {
+                                const yieldData = data.trim();
+                                if (yieldData) {
+                                    bondYield = yieldData;
+                                    console.log('[基金温度] 从文件读取到10年期国债收益率:', bondYield);
                                 }
-                            }
-                        });
+                            })
+                            .catch(error => {
+                                console.log('[基金温度] 读取债券收益率文件失败:', error);
+                            })
+                            .finally(() => {
+                                updateEpvData(epvCells, bondYield);
+                            });
+                    } else {
+                        // 缓存中有数据，直接使用
+                        updateEpvData(epvCells, bondYield);
+                    }
                 }
             }
         }
@@ -795,51 +770,42 @@ function calculateAndShowStockWeather() {
             // 从CSV数据中获取ROE(2025Q3)值（从截图中看到是0.0745）
             const roeValue = 0.0745; // 净资产收益率(ROE)(2025Q3)
             
-            // 读取10年期国债收益率
+            // 优先从localStorage加载债券收益率
             let bondYield = '1.803%';
-            fetch('bond_yield.txt')
-                .then(response => response.text())
-                .then(data => {
-                    const yieldData = data.trim();
-                    if (yieldData) {
-                        bondYield = yieldData;
+            
+            try {
+                const financialDataStr = localStorage.getItem('financialData');
+                if (financialDataStr) {
+                    const financialData = JSON.parse(financialDataStr);
+                    if (financialData.bond_yield && financialData.bond_yield.yield) {
+                        bondYield = financialData.bond_yield.yield;
+                        console.log('[基金温度] 从缓存读取到10年期国债收益率:', bondYield);
                     }
-                })
-                .catch(error => {
-                    console.log('[基金温度] 读取债券收益率文件失败:', error);
-                })
-                .finally(() => {
-                    // 提取国债收益率数值
-                        const bondValue = parseFloat(bondYield.replace('%', ''));
-                        
-                        if (!isNaN(bondValue) && bondValue > 0) {
-                            // 计算股市吸引力：ROE / 10年期国债收益
-                            stockAttraction = roeValue / bondValue;
-                            // 将结果转换为百分比（乘以100）
-                            const stockAttractionPercent = stockAttraction * 100;
-                            console.log('[基金温度] 计算股市吸引力 - ROE:', roeValue, '国债收益:', bondValue, '股市吸引力:', stockAttraction, '百分比:', stockAttractionPercent);
-                            
-                            // 更新股市吸引力单元格
-                            const magicBoxRows = magicBoxTable.querySelectorAll('tbody tr');
-                            for (let row of magicBoxRows) {
-                                const cells = row.querySelectorAll('td');
-                                if (cells.length > 0) {
-                                    const boxName = cells[0].textContent.trim();
-                                    if (boxName === '股市吸引力') {
-                                        if (cells.length > 1) {
-                                            cells[1].textContent = stockAttractionPercent.toFixed(2) + '%';
-                                            cells[1].style.textAlign = 'center';
-                                            cells[1].style.verticalAlign = 'middle';
-                                            console.log('[基金温度] 已更新股市吸引力:', stockAttractionPercent.toFixed(2) + '%');
-                                        }
-                                    }
-                                }
-                            }
+                }
+            } catch (error) {
+                console.error('[基金温度] 读取缓存金融数据失败:', error.message);
+            }
+            
+            // 如果缓存中没有，从文件读取
+            if (bondYield === '1.803%') {
+                fetch('bond_yield.txt')
+                    .then(response => response.text())
+                    .then(data => {
+                        const yieldData = data.trim();
+                        if (yieldData) {
+                            bondYield = yieldData;
                         }
-                        
-                        // 计算巴菲特指数和七日换手率
-                        calculateBuffettIndexAndTurnover();
-                });
+                    })
+                    .catch(error => {
+                        console.log('[基金温度] 读取债券收益率文件失败:', error);
+                    })
+                    .finally(() => {
+                        calculateStockAttraction(bondYield, roeValue, magicBoxTable);
+                    });
+            } else {
+                // 缓存中有数据，直接计算
+                calculateStockAttraction(bondYield, roeValue, magicBoxTable);
+            }
             
             // 更新四大魔盒表格数据
             const allRows = magicBoxTable.querySelectorAll('tbody tr');
@@ -907,32 +873,117 @@ function calculateAndShowStockWeather() {
     }
 }
 
+// 更新EPV数据
+function updateEpvData(epvCells, bondYield) {
+    // 更新单元格内容
+    epvCells[1].textContent = bondYield;
+    epvCells[1].style.textAlign = 'center';
+    epvCells[1].style.verticalAlign = 'middle';
+    console.log('[基金温度] 已更新10年期国债收益:', bondYield);
+    
+    // 计算并更新EPV值
+    if (epvCells[0] && epvCells[2] && epvCells[3]) {
+        const peText = epvCells[0].textContent.trim();
+        const bondText = bondYield.trim();
+        
+        // 提取数值（去除%符号）
+        const peValue = parseFloat(peText.replace('%', ''));
+        const bondValue = parseFloat(bondText.replace('%', ''));
+        
+        if (!isNaN(peValue) && !isNaN(bondValue) && bondValue > 0) {
+            // 计算EPV: PE_TTM / 10年期国债收益
+            const epvValue = peValue / bondValue;
+            console.log('[基金温度] 计算EPV - PE:', peValue, '国债收益:', bondValue, 'EPV:', epvValue);
+            
+            // 更新EPV单元格
+            epvCells[2].textContent = epvValue.toFixed(8);
+            epvCells[2].style.textAlign = 'center';
+            epvCells[2].style.verticalAlign = 'middle';
+            console.log('[基金温度] 已更新EPV值:', epvValue.toFixed(8));
+            
+            // 更新建议栏内容
+            let advice = '';
+            if (epvValue > 2.5) {
+                advice = '黄金坑';
+            } else if (epvValue >= 2 && epvValue <= 2.5) {
+                advice = '白银坑';
+            } else if (epvValue >= 1.5 && epvValue < 2) {
+                advice = '青铜坑';
+            } else {
+                advice = '废坑';
+            }
+            
+            epvCells[3].textContent = advice;
+            epvCells[3].style.textAlign = 'center';
+            epvCells[3].style.verticalAlign = 'middle';
+            console.log('[基金温度] 已更新建议:', advice);
+        }
+    }
+}
+
+// 计算股市吸引力
+function calculateStockAttraction(bondYield, roeValue, magicBoxTable) {
+    // 提取国债收益率数值
+    const bondValue = parseFloat(bondYield.replace('%', ''));
+    
+    if (!isNaN(bondValue) && bondValue > 0) {
+        // 计算股市吸引力：ROE / 10年期国债收益
+        const stockAttraction = roeValue / bondValue;
+        // 将结果转换为百分比（乘以100）
+        const stockAttractionPercent = stockAttraction * 100;
+        console.log('[基金温度] 计算股市吸引力 - ROE:', roeValue, '国债收益:', bondValue, '股市吸引力:', stockAttraction, '百分比:', stockAttractionPercent);
+        
+        // 更新股市吸引力单元格
+        const magicBoxRows = magicBoxTable.querySelectorAll('tbody tr');
+        for (let row of magicBoxRows) {
+            const cells = row.querySelectorAll('td');
+            if (cells.length > 0) {
+                const boxName = cells[0].textContent.trim();
+                if (boxName === '股市吸引力') {
+                    if (cells.length > 1) {
+                        cells[1].textContent = stockAttractionPercent.toFixed(2) + '%';
+                        cells[1].style.textAlign = 'center';
+                        cells[1].style.verticalAlign = 'middle';
+                        console.log('[基金温度] 已更新股市吸引力:', stockAttractionPercent.toFixed(2) + '%');
+                    }
+                }
+            }
+        }
+    }
+    
+    // 计算巴菲特指数和七日换手率
+    calculateBuffettIndexAndTurnover();
+}
+
 // 计算巴菲特指数和七日换手率
 function calculateBuffettIndexAndTurnover() {
     console.log('[基金温度] 开始计算巴菲特指数和七日换手率');
     
-    // 从集思录网站获取数据
-    const totalMarketValue = 1298644.19; // 2026-01-29 A股总市值（亿元）
-    const gdp = 1401879.2; // 2025年GDP（亿元）
+    // 优先从localStorage加载金融数据
+    let totalMarketValue = 1298644.19; // 默认值
+    let gdp = 1401879.2; // 默认值
+    let sevenDayTurnover = 42.6961; // 默认值
+    
+    try {
+        const financialDataStr = localStorage.getItem('financialData');
+        if (financialDataStr) {
+            const financialData = JSON.parse(financialDataStr);
+            if (financialData.a_stock && financialData.a_stock.total_market_value) {
+                totalMarketValue = parseFloat(financialData.a_stock.total_market_value);
+                console.log('[基金温度] 从缓存读取到A股总市值:', totalMarketValue);
+            }
+            if (financialData.gdp && financialData.gdp.gdp) {
+                gdp = parseFloat(financialData.gdp.gdp);
+                console.log('[基金温度] 从缓存读取到GDP:', gdp);
+            }
+        }
+    } catch (error) {
+        console.error('[基金温度] 读取缓存金融数据失败:', error.message);
+    }
     
     // 计算巴菲特指数
     const buffettIndex = (totalMarketValue / gdp) * 100;
     console.log('[基金温度] 计算巴菲特指数 - 总市值:', totalMarketValue, 'GDP:', gdp, '巴菲特指数:', buffettIndex);
-    
-    // 最近7天的换手率数据（2026-01-21到2026-01-29）
-    const turnovers = [
-        5.3971, // 2026-01-21
-        5.5646, // 2026-01-22
-        6.3290, // 2026-01-23
-        6.6990, // 2026-01-26
-        5.9617, // 2026-01-27
-        6.0973, // 2026-01-28
-        6.6484  // 2026-01-29
-    ];
-    
-    // 计算七日换手率之和
-    const sevenDayTurnover = turnovers.reduce((sum, value) => sum + value, 0);
-    console.log('[基金温度] 计算七日换手率 - 数据:', turnovers, '总和:', sevenDayTurnover);
     
     // 更新页面显示
     const magicBoxTable = document.querySelector('.magic-box-table');
@@ -1032,163 +1083,11 @@ document.addEventListener('DOMContentLoaded', function() {
 async function loadAllData() {
     try {
         console.log('[基金温度] 开始加载所有数据');
-        showLoading(true);
-        // 加载 code.json
-        console.log('[基金温度] 尝试加载 code.json');
-        const codeRes = await fetch('code.json');
-        if (!codeRes.ok) {
-            throw new Error('code.json 加载失败');
-        }
-        codeConfig = await codeRes.json();
-        console.log('[基金温度] code.json 加载成功');
         
-        let csvText1, csvText2;
-        let actualDataDate = '';
-        let foundData = false;
-        let currentFilename = '';
+        // 1. 首先尝试从缓存加载数据，快速显示
+        const cacheKey = 'fundTempData_v5';
+        const cachedDataStr = localStorage.getItem(cacheKey);
         
-        // 通过尝试加载来获取所有存在的CSV文件，然后按日期排序
-        console.log('[基金温度] 开始扫描本地CSV文件');
-        const existingCsvFiles = [];
-        
-        // 尝试加载过去60天的CSV文件，找到所有存在的文件
-        const today = new Date();
-        for (let i = 0; i < 60; i++) {
-            const date = new Date(today);
-            date.setDate(today.getDate() - i);
-            const fileName = date.toISOString().split('T')[0] + '.csv';
-            
-            try {
-                const response = await fetch(fileName, { cache: 'no-cache' });
-                if (response.ok) {
-                    existingCsvFiles.push(fileName);
-                }
-            } catch (error) {
-                // 文件不存在，忽略
-            }
-        }
-        
-        // 按日期降序排序（最新的在前）
-        existingCsvFiles.sort((a, b) => b.localeCompare(a));
-        console.log('[基金温度] 找到的CSV文件列表（按日期降序）:', existingCsvFiles);
-        
-        if (existingCsvFiles.length === 0) {
-            throw new Error('未找到任何CSV文件');
-        }
-        
-        // 最大的文件名就是最新的文件（上一日涨跌数据）
-        const latestFile = existingCsvFiles[0];
-        console.log(`[基金温度] 最新文件（上一日涨跌）: ${latestFile}`);
-        
-        // 第二大的文件名就是上两日涨跌数据
-        const secondLatestFile = existingCsvFiles.length > 1 ? existingCsvFiles[1] : null;
-        console.log(`[基金温度] 次新文件（上两日涨跌）: ${secondLatestFile}`);
-        
-        // 加载最新的CSV文件
-        console.log(`[基金温度] 尝试加载最新文件: ${latestFile}`);
-        const csvRes = await fetch(latestFile, { cache: 'no-cache' });
-        if (csvRes.ok) {
-            csvText1 = await csvRes.text();
-            console.log(`[基金温度] 最新文件内容长度: ${csvText1.length} 字符`);
-            fundsData = parseCSVFull(csvText1);
-            console.log(`[基金温度] 最新文件解析后的数据量: ${Object.keys(fundsData).length} 条`);
-            actualDataDate = latestFile.replace('.csv', '');
-            currentFilename = latestFile;
-            foundData = true;
-            console.log(`[基金温度] 成功加载最新文件: ${latestFile}`);
-        } else {
-            throw new Error(`无法加载最新文件: ${latestFile}`);
-        }
-        
-        // 尝试加载上两日涨跌数据（第二大的文件）
-        try {
-            if (secondLatestFile) {
-                console.log(`[基金温度] 尝试加载上两日涨跌文件: ${secondLatestFile}`);
-                const csvRes2 = await fetch(secondLatestFile, { cache: 'no-cache' });
-                if (csvRes2.ok) {
-                    csvText2 = await csvRes2.text();
-                    oldData = parseOldCSVFull(csvText2);
-                    console.log(`[基金温度] 成功加载上两日涨跌文件: ${secondLatestFile}`);
-                    console.log(`[基金温度] 上两日涨跌数据量: ${Object.keys(oldData).length} 条`);
-                } else {
-                    oldData = {};
-                    console.log(`[基金温度] 未找到上两日涨跌数据`);
-                }
-            } else {
-                oldData = {};
-                console.log(`[基金温度] 没有第二大的CSV文件，上两日涨跌数据为空`);
-            }
-        } catch (error) {
-            oldData = {};
-            console.log(`[基金温度] 加载上两日涨跌数据失败: ${error.message}`);
-        }
-        
-        // 合并数据：将oldData的上两日涨跌幅合并到fundsData
-        for (const [code, data] of Object.entries(oldData)) {
-            if (fundsData[code]) {
-                fundsData[code].two_day_change_pct = data.change_pct;
-            }
-        }
-        
-        // 合并自定义配置到codeConfig（如果有的话）
-        const customConfigStr = localStorage.getItem('customCodeConfig');
-        if (customConfigStr) {
-            try {
-                const customConfig = JSON.parse(customConfigStr);
-                // 合并自定义配置
-                for (const [category, codes] of Object.entries(customConfig)) {
-                    if (codeConfig[category]) {
-                        // 合并数组，去除重复
-                        const existingCodes = new Set(codeConfig[category]);
-                        for (const code of codes) {
-                            if (!existingCodes.has(code)) {
-                                codeConfig[category].push(code);
-                            }
-                        }
-                    } else {
-                        codeConfig[category] = codes;
-                    }
-                }
-            } catch (e) {
-                // 合并自定义配置失败，忽略
-            }
-        }
-        
-        // 自动显示基金温度表格
-        renderFundTable();
-        
-        // 更新数据日期显示为实际使用的数据日期
-        updateDate(actualDataDate);
-        
-        // 重新计算并显示温度星级
-        calculateAndShowStarRating();
-        
-        // 计算并显示股市晴雨表数据
-        calculateAndShowStockWeather();
-        
-        // 保存基金温度数据到缓存
-        const cacheKeySave = 'fundTempData_v4'; // 使用相同的新缓存键
-        fundTempCache[cacheKeySave] = {
-            fundsData: fundsData,
-            oldData: oldData,
-            codeConfig: codeConfig,
-            actualDataDate: actualDataDate,
-            timestamp: Date.now()
-        };
-        
-        // 保存缓存到localStorage
-        saveCache();
-        console.log('[基金温度] 数据已保存到缓存');
-        
-        showLoading(false);
-        
-    } catch (error) {
-        console.error('[基金温度] 加载数据失败:', error.message);
-        
-        // 尝试从localStorage加载缓存数据
-        console.log('[基金温度] 尝试从localStorage加载缓存数据');
-        const cacheKeyV4 = 'fundTempData_v4';
-        const cachedDataStr = localStorage.getItem(cacheKeyV4);
         if (cachedDataStr) {
             try {
                 const tempData = JSON.parse(cachedDataStr);
@@ -1196,21 +1095,297 @@ async function loadAllData() {
                 oldData = tempData.oldData;
                 codeConfig = tempData.codeConfig;
                 
-                // 显示数据
+                // 快速显示缓存数据
+                console.log('[基金温度] 从缓存加载数据并快速显示');
                 renderFundTable();
                 updateDate(tempData.actualDataDate);
                 calculateAndShowStarRating();
                 calculateAndShowStockWeather();
-                showLoading(false);
+                
+                // 缓存数据显示后，异步更新最新数据
+                console.log('[基金温度] 缓存数据已显示，开始异步更新最新数据');
+                updateLatestData().catch(error => {
+                    console.error('[基金温度] 异步更新数据失败:', error.message);
+                });
+                
                 return;
             } catch (e) {
                 console.error('[基金温度] 解析缓存数据失败:', e.message);
             }
         }
         
-        // 如果没有缓存数据，显示默认的数据日期
-        updateDate('未知日期');
+        // 2. 如果没有缓存，显示加载动画并加载数据
+        showLoading(true);
+        await loadDataSync();
         showLoading(false);
+        
+    } catch (error) {
+        console.error('[基金温度] 加载数据失败:', error.message);
+        showLoading(false);
+        
+        // 尝试从缓存加载数据
+        const cacheKey = 'fundTempData_v5';
+        const cachedDataStr = localStorage.getItem(cacheKey);
+        if (cachedDataStr) {
+            try {
+                const tempData = JSON.parse(cachedDataStr);
+                fundsData = tempData.fundsData;
+                oldData = tempData.oldData;
+                codeConfig = tempData.codeConfig;
+                
+                // 显示缓存数据
+                renderFundTable();
+                updateDate(tempData.actualDataDate);
+                calculateAndShowStarRating();
+                calculateAndShowStockWeather();
+            } catch (e) {
+                console.error('[基金温度] 解析缓存数据失败:', e.message);
+                updateDate('未知日期');
+            }
+        } else {
+            updateDate('未知日期');
+        }
+    }
+}
+
+// 同步加载数据（当没有缓存时使用）
+async function loadDataSync() {
+    // 加载 code.json
+    console.log('[基金温度] 尝试加载 code.json');
+    const codeRes = await fetch('code.json');
+    if (!codeRes.ok) {
+        throw new Error('code.json 加载失败');
+    }
+    codeConfig = await codeRes.json();
+    console.log('[基金温度] code.json 加载成功');
+    
+    // 并行加载CSV文件，提高速度
+    const existingCsvFiles = await findExistingCsvFiles();
+    
+    if (existingCsvFiles.length === 0) {
+        throw new Error('未找到任何CSV文件');
+    }
+    
+    // 加载最新的两个CSV文件
+    const [latestFile, secondLatestFile] = existingCsvFiles;
+    console.log(`[基金温度] 最新文件: ${latestFile}`);
+    console.log(`[基金温度] 次新文件: ${secondLatestFile}`);
+    
+    // 并行加载两个文件
+    const [latestData, secondLatestData] = await Promise.all([
+        loadCsvFile(latestFile),
+        secondLatestFile ? loadCsvFile(secondLatestFile) : Promise.resolve(null)
+    ]);
+    
+    fundsData = latestData.data;
+    oldData = secondLatestData ? secondLatestData.data : {};
+    const actualDataDate = latestFile.replace('.csv', '');
+    
+    // 合并数据
+    for (const [code, data] of Object.entries(oldData)) {
+        if (fundsData[code]) {
+            fundsData[code].two_day_change_pct = data.change_pct;
+        }
+    }
+    
+    // 合并自定义配置
+    mergeCustomConfig();
+    
+    // 显示数据
+    renderFundTable();
+    updateDate(actualDataDate);
+    calculateAndShowStarRating();
+    calculateAndShowStockWeather();
+    
+    // 保存到缓存
+    saveDataToCache(fundsData, oldData, codeConfig, actualDataDate);
+    
+    // 异步加载金融数据
+    loadFinancialData().catch(error => {
+        console.error('[基金温度] 加载金融数据失败:', error.message);
+    });
+}
+
+// 异步更新最新数据
+async function updateLatestData() {
+    try {
+        console.log('[基金温度] 开始异步更新最新数据');
+        
+        // 加载 code.json
+        const codeRes = await fetch('code.json');
+        if (codeRes.ok) {
+            codeConfig = await codeRes.json();
+        }
+        
+        // 查找最新的CSV文件
+        const existingCsvFiles = await findExistingCsvFiles();
+        if (existingCsvFiles.length === 0) {
+            return;
+        }
+        
+        // 加载最新的两个文件
+        const [latestFile, secondLatestFile] = existingCsvFiles;
+        const [latestData, secondLatestData] = await Promise.all([
+            loadCsvFile(latestFile),
+            secondLatestFile ? loadCsvFile(secondLatestFile) : Promise.resolve(null)
+        ]);
+        
+        const newFundsData = latestData.data;
+        const newOldData = secondLatestData ? secondLatestData.data : {};
+        const actualDataDate = latestFile.replace('.csv', '');
+        
+        // 合并数据
+        for (const [code, data] of Object.entries(newOldData)) {
+            if (newFundsData[code]) {
+                newFundsData[code].two_day_change_pct = data.change_pct;
+            }
+        }
+        
+        // 合并自定义配置
+        mergeCustomConfig();
+        
+        // 更新数据并重新渲染
+        fundsData = newFundsData;
+        oldData = newOldData;
+        
+        console.log('[基金温度] 最新数据已加载，更新显示');
+        renderFundTable();
+        updateDate(actualDataDate);
+        calculateAndShowStarRating();
+        calculateAndShowStockWeather();
+        
+        // 保存到缓存
+        saveDataToCache(fundsData, oldData, codeConfig, actualDataDate);
+        
+        // 加载金融数据
+        await loadFinancialData();
+        
+    } catch (error) {
+        console.error('[基金温度] 异步更新数据失败:', error.message);
+    }
+}
+
+// 查找存在的CSV文件
+async function findExistingCsvFiles() {
+    const existingCsvFiles = [];
+    const today = new Date();
+    
+    // 生成过去30天的日期文件
+    const dateFiles = [];
+    for (let i = 0; i < 30; i++) {
+        const date = new Date(today);
+        date.setDate(today.getDate() - i);
+        const fileName = date.toISOString().split('T')[0] + '.csv';
+        dateFiles.push(fileName);
+    }
+    
+    // 并行检查文件是否存在
+    const promises = dateFiles.map(async (fileName) => {
+        try {
+            const response = await fetch(fileName, { cache: 'no-cache' });
+            if (response.ok) {
+                return fileName;
+            }
+            return null;
+        } catch (error) {
+            return null;
+        }
+    });
+    
+    const results = await Promise.all(promises);
+    const validFiles = results.filter(file => file !== null);
+    
+    // 按日期降序排序
+    validFiles.sort((a, b) => b.localeCompare(a));
+    console.log('[基金温度] 找到的CSV文件:', validFiles);
+    
+    return validFiles;
+}
+
+// 加载CSV文件
+async function loadCsvFile(fileName) {
+    try {
+        const response = await fetch(fileName, { cache: 'no-cache' });
+        if (response.ok) {
+            const csvText = await response.text();
+            const data = parseCSVFull(csvText);
+            return { data, fileName };
+        }
+        return { data: {}, fileName };
+    } catch (error) {
+        console.error(`[基金温度] 加载文件 ${fileName} 失败:`, error);
+        return { data: {}, fileName };
+    }
+}
+
+// 合并自定义配置
+function mergeCustomConfig() {
+    const customConfigStr = localStorage.getItem('customCodeConfig');
+    if (customConfigStr && codeConfig) {
+        try {
+            const customConfig = JSON.parse(customConfigStr);
+            for (const [category, codes] of Object.entries(customConfig)) {
+                if (codeConfig[category]) {
+                    const existingCodes = new Set(codeConfig[category]);
+                    for (const code of codes) {
+                        if (!existingCodes.has(code)) {
+                            codeConfig[category].push(code);
+                        }
+                    }
+                } else {
+                    codeConfig[category] = codes;
+                }
+            }
+        } catch (e) {
+            console.error('[基金温度] 合并自定义配置失败:', e.message);
+        }
+    }
+}
+
+// 保存数据到缓存
+function saveDataToCache(fundsData, oldData, codeConfig, actualDataDate) {
+    const cacheKey = 'fundTempData_v5';
+    fundTempCache[cacheKey] = {
+        fundsData: fundsData,
+        oldData: oldData,
+        codeConfig: codeConfig,
+        actualDataDate: actualDataDate,
+        timestamp: Date.now()
+    };
+    
+    // 保存到localStorage
+    try {
+        localStorage.setItem(cacheKey, JSON.stringify(fundTempCache[cacheKey]));
+        console.log('[基金温度] 数据已保存到缓存');
+    } catch (error) {
+        console.error('[基金温度] 保存缓存失败:', error.message);
+    }
+}
+
+// 加载金融数据（债券收益率、A股数据、GDP数据）
+async function loadFinancialData() {
+    try {
+        console.log('[基金温度] 开始加载金融数据');
+        
+        // 加载合并的金融数据文件
+        const response = await fetch('combined_data.json', { cache: 'no-cache' });
+        if (response.ok) {
+            const financialData = await response.json();
+            console.log('[基金温度] 金融数据加载成功:', financialData);
+            
+            // 保存到localStorage
+            try {
+                localStorage.setItem('financialData', JSON.stringify(financialData));
+                console.log('[基金温度] 金融数据已保存到缓存');
+            } catch (error) {
+                console.error('[基金温度] 保存金融数据缓存失败:', error.message);
+            }
+            
+            // 更新相关UI
+            calculateAndShowStockWeather();
+        }
+    } catch (error) {
+        console.error('[基金温度] 加载金融数据失败:', error.message);
     }
 }
 
