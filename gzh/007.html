@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>简历改前改后对比</title>
+<style>
+body {
+  max-width: 578px;
+  margin: 0 auto;
+  padding: 20px 35px;
+  font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+  color: #3e3e3e;
+  font-size: 16px;
+  line-height: 1.75;
+}
+.main-title {
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  color: #1A73E8;
+  margin: 20px 0 24px 0;
+}
+.desc {
+  text-align: center;
+  font-size: 14px;
+  color: #888;
+  margin-bottom: 28px;
+}
+.section-title {
+  font-size: 16px;
+  font-weight: bold;
+  color: #1A73E8;
+  margin: 24px 0 12px 0;
+  padding: 8px 14px;
+  background: #E8F0FE;
+  border-radius: 6px;
+}
+ compare-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 16px 0;
+  font-size: 14px;
+  line-height: 1.7;
+}
+.compare-table th {
+  background: #1A73E8;
+  color: #fff;
+  padding: 10px 12px;
+  text-align: left;
+  font-size: 14px;
+}
+.compare-table td {
+  padding: 10px 12px;
+  border-bottom: 1px solid #eee;
+  vertical-align: top;
+}
+.compare-table tr:nth-child(even) td {
+  background: #F8F9FA;
+}
+.bad { color: #d93025; }
+.good { color: #1a7f37; font-weight: bold; }
+.tip-box {
+  background: #E8F0FE;
+  border-left: 4px solid #1A73E8;
+  border-radius: 6px;
+  padding: 12px 16px;
+  margin: 20px 0;
+  font-size: 14px;
+  line-height: 1.8;
+}
+.prompt-box {
+  background: #0D1B2A;
+  border: 1px solid #1A73E8;
+  border-radius: 8px;
+  padding: 14px 18px;
+  margin: 16px 0;
+  font-family: "JetBrains Mono", "Fira Code", Consolas, monospace;
+  font-size: 13px;
+  line-height: 1.6;
+  color: #A3C4F7;
+  overflow-x: auto;
+}
+.tag { color: #569CD6; }
+.str { color: #CE9178; }
+</style>
+</head>
+<body>
+
+<p class="main-title">📄 简历改前 vs 改后 完整对比</p>
+<p class="desc">照着改，每句话加一个动词、一个数字，简历通过率立刻提升</p>
+
+<!-- ===== 对比表 ===== -->
+<p class="section-title">❌ 改之前 → ✅ 改之后（逐句对照）</p>
+
+<table class="compare-table">
+  <tr>
+    <th style="width:50%;">❌ 改之前（你可能的写法）</th>
+    <th style="width:50%;">✅ 改之后（DeepSeek改完）</th>
+  </tr>
+  <tr>
+    <td class="bad">参与了XX项目的开发工作，负责模块设计和代码实现。</td>
+    <td class="good">主导XX模块的设计与实现，支撑10万+用户日常使用，系统可用性达99.9%。</td>
+  </tr>
+  <tr>
+    <td class="bad">熟练使用Python、SQL等工具进行数据分析。</td>
+    <td class="good">使用Python和SQL完成用户行为分析，输出周报被产品总监采纳并推动2项功能优化。</td>
+  </tr>
+  <tr>
+    <td class="bad">具有良好的团队协作能力和沟通能力。</td>
+    <td class="good">跨团队协调产品、设计、研发三方资源，推动3个版本按期上线，零延期。</td>
+  </tr>
+  <tr>
+    <td class="bad">负责产品的需求分析和功能设计。</td>
+    <td class="good">独立完成XX功能从需求调研到上线的全流程，上线后DAU提升20%。</td>
+  </tr>
+  <tr>
+    <td class="bad">参与了多次产品迭代和优化工作。</td>
+    <td class="good">主导5次核心功能迭代，用户满意度从3.2提升至4.6（5分制）。</td>
+  </tr>
+  <tr>
+    <td class="bad">熟悉敏捷开发流程，参与每日站会。</td>
+    <td class="good">在敏捷团队中担任Scrum Master，带领6人小组完成12个Sprint，交付准时率95%。</td>
+  </tr>
+</table>
+
+<!-- ===== 改法总结 ===== -->
+<p class="section-title">✅ 三步改法（照着做）</p>
+
+<div class="tip-box">
+  <strong>第一步：把"参与/负责"换成具体动作</strong><br>
+  ❌ 参与了XX项目<br>
+  ✅ 主导 / 设计 / 推动 / 优化 / 落地XX<br><br>
+  <strong>第二步：每句话尽量加一个数字</strong><br>
+  ❌ 服务了大量用户<br>
+  ✅ 支撑10万+用户 / DAU提升20% / 零延期<br><br>
+  <strong>第三步：写结果，不写过程</strong><br>
+  ❌ 负责模块开发<br>
+  ✅ 模块上线后用户留存提升15% / 系统可用性99.9%
+</div>
+
+<!-- ===== DeepSeek提示词 ===== -->
+<p class="section-title">🤖 直接复制给DeepSeek的提示词</p>
+
+<p style="font-size:14px; color:#555; margin:8px 0 12px 0;">把你的简历粘进去，把最后一句话里的岗位名改成你想投的，直接发。</p>
+
+<pre class="prompt-box"><span class="tag">我这份简历投了30份，一个面试电话都没接到。</span>
+<span class="tag">帮我改一下，要求：</span>
+<span class="tag">1. 用更专业的动词，别全是"参与""负责"</span>
+<span class="tag">2. 突出成果和数据，让我看起来有价值</span>
+<span class="tag">3. 我想投产品经理岗位，往这个方向靠</span>
+<span class="tag">4. 直接给我改好的版本，改完的地方用加粗标出来</span>
+<span class="tag">5. 最后给我一个"三步改法"总结，我以后自己会改</span></pre>
+
+<!-- ===== 注意事项 ===== -->
+<p class="section-title">⚠️ 几个注意点</p>
+
+<p style="font-size:14px; line-height:1.8; color:#555; margin:0;">
+  1. 数字要真实，别瞎编，面试会问细节<br>
+  2. 改完读一遍，确认每一句都有"动词+结果"<br>
+  3. 投不同岗位前，把提示词第3条改掉就行<br>
+  4. 保存改之前和改之后的两个版本，面试时对照着讲
+</p>
+
+<hr style="border:none; border-top:1px solid #eee; margin:28px 0 16px 0;">
+
+<p style="text-align:center; font-size:13px; color:#aaa;">LobsterSkill · 龙虾君的AI提效笔记</p>
+
+</body>
+</html>
