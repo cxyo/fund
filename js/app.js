@@ -630,10 +630,15 @@ function calculateAndShowStockWeather() {
                     // 如果缓存中没有，从文件读取
                     if (bondYield === '1.803%') {
                         fetch('bond_yield.txt')
-                            .then(response => response.text())
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error('文件不存在');
+                                }
+                                return response.text();
+                            })
                             .then(data => {
                                 const yieldData = data.trim();
-                                if (yieldData) {
+                                if (yieldData && !yieldData.includes('Error')) {
                                     bondYield = yieldData;
                                     console.log('[基金温度] 从文件读取到10年期国债收益率:', bondYield);
                                 }
@@ -696,10 +701,15 @@ function calculateAndShowStockWeather() {
             // 如果缓存中没有，从文件读取
             if (bondYield === '1.803%') {
                 fetch('bond_yield.txt')
-                    .then(response => response.text())
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('文件不存在');
+                        }
+                        return response.text();
+                    })
                     .then(data => {
                         const yieldData = data.trim();
-                        if (yieldData) {
+                        if (yieldData && !yieldData.includes('Error')) {
                             bondYield = yieldData;
                         }
                     })
